@@ -7,6 +7,7 @@ interface OscilloscopeProps {
 }
 
 const Oscilloscope: React.FC<OscilloscopeProps> = ({
+  audioEngine,
   isPlaying
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,51 +50,42 @@ const Oscilloscope: React.FC<OscilloscopeProps> = ({
 
     ctx.setLineDash([]);
 
-    if (isPlaying) {
-      // Draw animated premium waveform
-      const time = Date.now() * 0.005;
-      const centerY = height / 2;
-      const amplitude = height * 0.3;
+    if (isPlaying && audioEngine) {
+      // Get actual audio data from the engine
+      const dataArray = audioEngine.getAnalyserData();
+      
+      if (dataArray.length > 0) {
+        const centerY = height / 2;
+        const sliceWidth = width / dataArray.length;
 
-      // Create premium gradient
-      const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, '#DAA520');
-      gradient.addColorStop(0.5, '#3B82F6');
-      gradient.addColorStop(1, '#FF69B4');
+        // Create premium gradient
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, '#DAA520');
+        gradient.addColorStop(0.5, '#3B82F6');
+        gradient.addColorStop(1, '#FF69B4');
 
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.shadowColor = '#DAA520';
-      ctx.shadowBlur = 15;
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#DAA520';
+        ctx.shadowBlur = 10;
 
-      ctx.beginPath();
-      for (let x = 0; x < width; x += 2) {
-        const y = centerY + Math.sin((x / width) * Math.PI * 6 + time) * amplitude * Math.sin(time * 0.3);
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+        ctx.beginPath();
+        let x = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = dataArray[i] / 128.0;
+          const y = v * height * 0.3 + centerY;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+          x += sliceWidth;
         }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       }
-      ctx.stroke();
-
-      // Add secondary harmonic with blue color
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      for (let x = 0; x < width; x += 2) {
-        const y = centerY + Math.sin((x / width) * Math.PI * 12 + time * 1.5) * amplitude * 0.4;
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.stroke();
-
-      ctx.shadowBlur = 0;
     } else {
       // Draw static preview waveform
       ctx.strokeStyle = 'rgba(156, 163, 175, 0.5)';

@@ -349,6 +349,15 @@ export class AudioEngine {
     return dataArray;
   }
 
+  getFrequencyData(): Uint8Array {
+    if (!this.analyser) return new Uint8Array(0);
+    
+    const bufferLength = this.analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    this.analyser.getByteFrequencyData(dataArray);
+    return dataArray;
+  }
+
   getSettings(): AudioSettings {
     return { ...this.settings };
   }
