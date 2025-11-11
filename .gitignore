@@ -10,6 +10,19 @@ node_modules/
 /dist
 /build
 
+# iOS
+ios/App/Pods/
+ios/App/.swiftpm/
+ios/App/build/
+*.xcworkspace
+!default.xcworkspace
+xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
 # Misc
 .DS_Store
 .env.local

@@ -35,7 +35,23 @@ function App() {
   const rampIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    return () => {
+    // Handle page visibility changes (important for background audio)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is hidden (app in background) - audio should continue playing
+        console.log('App moved to background - audio continues');
+      } else {
+        // Page is visible again - ensure audio context is active
+        if (isPlaying && audioEngine) {
+          audioEngine.start().catch(error => {
+            console.error('Failed to resume audio after visibility change:', error);
+          });
+        }
+      }
+    };
+
+    // Handle page before unload (cleanup)
+    const handleBeforeUnload = () => {
       if (audioEngine) {
         audioEngine.stop();
       }
@@ -43,7 +59,21 @@ function App() {
         clearInterval(rampIntervalRef.current);
       }
     };
-  }, [audioEngine]);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (audioEngine) {
+        audioEngine.stop();
+      }
+      if (rampIntervalRef.current) {
+        clearInterval(rampIntervalRef.current);
+      }
+    };
+  }, [audioEngine, isPlaying]);
 
   const handleGoalSelected = (goal: GoalType) => {
     setSelectedGoal(goal);
@@ -319,10 +349,36 @@ function App() {
               </div>
             )}
 
-            {/* Audio Controls - Visible when Pro Mode is OFF */}
+            {/* Regular Mode - Frequency Controls and Audio Controls */}
             {!showProMode && (
-              <div className="mb-8">
-                <div className="card-premium p-8 max-w-md mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Frequency Controls */}
+                <div className="card-premium p-8">
+                  <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequency Controls</h2>
+                  <div className="space-y-8">
+                    <FrequencyControl
+                      label="Carrier Frequency"
+                      value={settings.carrierFrequency}
+                      min={0.001}
+                      max={9999}
+                      step={0.001}
+                      unit="Hz"
+                      onChange={handleCarrierFrequencyChange}
+                    />
+                    <FrequencyControl
+                      label={settings.mode === 'binaural' ? 'Beat Frequency' : 'Pulse Frequency'}
+                      value={settings.beatFrequency}
+                      min={0.001}
+                      max={9999}
+                      step={0.001}
+                      unit="Hz"
+                      onChange={handleBeatFrequencyChange}
+                    />
+                  </div>
+                </div>
+                
+                {/* Audio Controls */}
+                <div className="card-premium p-8">
                   <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
                   <AudioControlPanel
                     isPlaying={isPlaying}

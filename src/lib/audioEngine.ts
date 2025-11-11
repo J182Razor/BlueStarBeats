@@ -41,7 +41,7 @@ export class AudioEngine {
       // Create high-quality audio context with optimized settings
       this.audioContext = new AudioContext({
         sampleRate: 44100, // Use standard sample rate for better compatibility and faster initialization
-        latencyHint: 'interactive'
+        latencyHint: 'playback' // Use 'playback' for better background audio support
       });
 
       // Resume context immediately if suspended
@@ -49,12 +49,31 @@ export class AudioEngine {
         await this.audioContext.resume();
       }
 
+      // Set up event listeners for audio context state changes
+      this.setupAudioContextListeners();
+
       // Pre-initialize audio nodes for faster startup
       this.setupAudioNodes();
     } catch (error) {
       console.error('Failed to initialize audio context:', error);
       throw error;
     }
+  }
+
+  private setupAudioContextListeners(): void {
+    if (!this.audioContext) return;
+
+    // Listen for audio context state changes (important for iOS background playback)
+    this.audioContext.addEventListener('statechange', () => {
+      console.log('AudioContext state changed to:', this.audioContext?.state);
+      
+      // If context gets suspended and we're playing, try to resume
+      if (this.audioContext?.state === 'suspended' && this.isPlaying) {
+        this.audioContext.resume().catch(error => {
+          console.error('Failed to resume audio context:', error);
+        });
+      }
+    });
   }
 
   private setupAudioNodes(): void {
@@ -278,8 +297,24 @@ export class AudioEngine {
       await this.initialize();
     }
 
+    // Ensure audio context is running (critical for background playback)
     if (this.audioContext?.state === 'suspended') {
-      await this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+      } catch (error) {
+        console.error('Failed to resume audio context:', error);
+        // Try to reinitialize if resume fails
+        await this.initialize();
+      }
+    }
+
+    // Keep audio context active for background playback
+    if (this.audioContext && this.audioContext.state !== 'running') {
+      try {
+        await this.audioContext.resume();
+      } catch (error) {
+        console.error('Failed to activate audio context:', error);
+      }
     }
 
     if (this.settings.mode === 'binaural') {

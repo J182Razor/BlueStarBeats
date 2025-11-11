@@ -88,6 +88,17 @@ A modern, minimalist web application for brainwave entrainment using binaural be
 - Modern web browser with Web Audio API support
 - Headphones recommended for best binaural beats experience
 
+## 📱 iOS App
+
+An iOS version of Blue Star Beats is available! See [IOS_SETUP.md](./IOS_SETUP.md) for detailed iOS setup and build instructions.
+
+**Quick Start for iOS:**
+```bash
+npm install
+npm run build
+npm run ios:open
+```
+
 ## 🛠️ Installation
 
 See [INSTALLATION.md](./INSTALLATION.md) for detailed installation instructions.
