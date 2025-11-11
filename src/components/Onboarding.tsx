@@ -34,25 +34,21 @@ const Onboarding: React.FC<OnboardingProps> = ({ onGoalSelected }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-main-gradient flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen bg-main-gradient relative flex items-center justify-center p-4">
+      {/* Starry Night Sky Background */}
+      <div className="starry-night"></div>
+      <div className="max-w-4xl w-full relative z-10">
         {/* Welcome Section */}
         <div className="text-center mb-12">
-          <div className="logo-container mb-6">
+          <div className="logo-container mb-8">
             <img 
               src="/logo-main.png" 
-              alt="Blue Star Beats Logo" 
-              className="h-20 w-auto filter drop-shadow-lg mx-auto"
+              alt="Blue Star Beats - Precision Brainwave Entrainment" 
+              className="h-32 md:h-40 w-auto filter drop-shadow-2xl mx-auto"
+              style={{ maxWidth: '100%', height: 'auto' }}
             />
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
-            <span className="text-brand-blue">Welcome to</span>{' '}
-            <span className="text-brand-golden">Blue Star Beats</span>
-          </h1>
-          <p className="text-xl text-gray-300 font-medium tracking-wide mb-2">
-            PRECISION BRAINWAVE ENTRAINMENT
-          </p>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-300 font-medium tracking-wide mb-6 max-w-2xl mx-auto">
             Let's tune your mind. What's your primary goal?
           </p>
         </div>

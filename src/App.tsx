@@ -184,33 +184,20 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-main-gradient relative overflow-hidden">
-        {/* Background Stars Effect */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 left-10 w-1 h-1 bg-white rounded-full opacity-60 animate-pulse"></div>
-          <div className="absolute top-20 right-20 w-1 h-1 bg-blue-400 rounded-full opacity-40 animate-pulse" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-40 left-1/4 w-1 h-1 bg-white rounded-full opacity-50 animate-pulse" style={{animationDelay: '2s'}}></div>
-          <div className="absolute bottom-40 right-1/4 w-1 h-1 bg-blue-300 rounded-full opacity-60 animate-pulse" style={{animationDelay: '3s'}}></div>
-          <div className="absolute bottom-20 left-20 w-1 h-1 bg-white rounded-full opacity-40 animate-pulse" style={{animationDelay: '4s'}}></div>
-          <div className="absolute top-1/2 right-10 w-1 h-1 bg-blue-400 rounded-full opacity-50 animate-pulse" style={{animationDelay: '5s'}}></div>
-        </div>
+        {/* Starry Night Sky Background */}
+        <div className="starry-night"></div>
 
         <div className="relative z-10 container mx-auto px-4 py-8">
           {/* Header */}
           <header className="text-center mb-8">
-            <div className="logo-container mb-4">
+            <div className="logo-container mb-6">
               <img 
                 src="/logo-main.png" 
-                alt="Blue Star Beats Logo" 
-                className="h-16 w-auto filter drop-shadow-lg mx-auto"
+                alt="Blue Star Beats - Precision Brainwave Entrainment" 
+                className="h-24 md:h-32 w-auto filter drop-shadow-2xl mx-auto"
+                style={{ maxWidth: '100%', height: 'auto' }}
               />
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-2">
-              <span className="text-brand-blue">Blue Star</span>{' '}
-              <span className="text-brand-golden">Beats</span>
-            </h1>
-            <p className="text-lg text-gray-300 font-medium">
-              PRECISION BRAINWAVE ENTRAINMENT
-            </p>
           </header>
 
           {/* Navigation Bar */}
@@ -291,7 +278,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Right column - Frequency Controls */}
+                {/* Right column - Frequency Controls and Audio Controls */}
                 <div className="space-y-8">
                   <div className="card-premium p-8">
                     <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequency Controls</h2>
@@ -316,23 +303,37 @@ function App() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Audio Controls - Under Frequency Controls in Pro Mode */}
+                  <div className="card-premium p-8">
+                    <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
+                    <AudioControlPanel
+                      isPlaying={isPlaying}
+                      volume={settings.volume}
+                      onPlay={handlePlay}
+                      onStop={handleStop}
+                      onVolumeChange={handleVolumeChange}
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Audio Controls - Always Visible */}
-            <div className="mb-8">
-              <div className="card-premium p-8 max-w-md mx-auto">
-                <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
-                <AudioControlPanel
-                  isPlaying={isPlaying}
-                  volume={settings.volume}
-                  onPlay={handlePlay}
-                  onStop={handleStop}
-                  onVolumeChange={handleVolumeChange}
-                />
+            {/* Audio Controls - Visible when Pro Mode is OFF */}
+            {!showProMode && (
+              <div className="mb-8">
+                <div className="card-premium p-8 max-w-md mx-auto">
+                  <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
+                  <AudioControlPanel
+                    isPlaying={isPlaying}
+                    volume={settings.volume}
+                    onPlay={handlePlay}
+                    onStop={handleStop}
+                    onVolumeChange={handleVolumeChange}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Premium CTA Section */}
             {!premiumService.isPremium() && (
