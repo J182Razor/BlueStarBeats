@@ -4,7 +4,9 @@
 
 set -e
 
-IOS_DIR="ios/App"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IOS_DIR="${SCRIPT_DIR}/ios/App"
 PODS_SCRIPT="${IOS_DIR}/Pods/Target Support Files/Pods-BlueStarBeats/Pods-BlueStarBeats-frameworks.sh"
 
 if [ ! -f "$PODS_SCRIPT" ]; then
@@ -20,7 +22,8 @@ cp "$PODS_SCRIPT" "${PODS_SCRIPT}.backup"
 echo "   ✓ Created backup: ${PODS_SCRIPT}.backup"
 
 # Use Ruby to process the script (more reliable than sed for complex patterns)
-ruby_script=$(cat <<'RUBY'
+TEMP_RUBY_SCRIPT=$(mktemp)
+cat > "$TEMP_RUBY_SCRIPT" <<'RUBY_EOF'
 content = File.read(ARGV[0])
 modified = false
 
@@ -51,10 +54,10 @@ end
 
 File.write(ARGV[0], content)
 puts modified ? "true" : "false"
-RUBY
-)
+RUBY_EOF
 
-was_modified=$(ruby -e "$ruby_script" "$PODS_SCRIPT")
+was_modified=$(ruby "$TEMP_RUBY_SCRIPT" "$PODS_SCRIPT")
+rm -f "$TEMP_RUBY_SCRIPT"
 
 if [ "$was_modified" = "true" ]; then
     echo "   ✓ Script patched successfully"
