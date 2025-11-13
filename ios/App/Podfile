@@ -14,11 +14,71 @@ def capacitor_pods
   pod 'CapacitorSplashScreen', :path => '../../node_modules/@capacitor/splash-screen'
 end
 
-target 'App' do
+target 'BlueStarBeats' do
   capacitor_pods
   # Add your Pods here
+  pod 'InjectHotReload', '~> 1.5'
 end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+  
+  # Fix sandbox error: exclude _CodeSignature from rsync operations
+  # This prevents Xcode sandbox from denying file-write-create for _CodeSignature directories
+  installer.pods_project.targets.each do |target|
+    frameworks_script_path = "#{installer.sandbox.root}/Target Support Files/Pods-#{target.name}/Pods-#{target.name}-frameworks.sh"
+    if File.exist?(frameworks_script_path)
+      script_content = File.read(frameworks_script_path)
+      modified = false
+      
+      # Process each line that contains rsync with filters
+      lines = script_content.lines.map do |line|
+        # Check if this line has rsync with --filter but doesn't have _CodeSignature
+        if line.include?('rsync') && line.include?('--filter') && !line.include?('_CodeSignature')
+          # Simple approach: add _CodeSignature filter after the last existing filter
+          # Common pattern in CocoaPods: filters end with "Modules", so add after that
+          if line.include?('Modules')
+            new_line = line.sub(/--filter\s+"-\s*Modules"/, '--filter "- Modules" --filter "- _CodeSignature"')
+          else
+            # Find the last --filter pattern and add ours after it
+            # Strategy: find all --filter patterns, then add after the last one
+            # Match the last occurrence of --filter "- something"
+            parts = line.split(/(--filter\s+"-[^"]*")/)
+            if parts.length > 1
+              # Reconstruct with _CodeSignature after the last filter
+              new_parts = []
+              parts.each_with_index do |part, idx|
+                new_parts << part
+                # If this is a filter pattern and it's the last one (before source/dest args)
+                if part.match(/--filter\s+"-[^"]*"/) && idx < parts.length - 1
+                  # Check if next part doesn't contain another --filter
+                  next_part = parts[idx + 1] || ''
+                  unless next_part.include?('--filter')
+                    new_parts << ' --filter "- _CodeSignature"'
+                  end
+                end
+              end
+              new_line = new_parts.join('')
+            else
+              # Fallback: try simple substitution before source argument
+              new_line = line.sub(/(--filter\s+"-[^"]*")\s+("\\$\{)/, '\\1 --filter "- _CodeSignature" \\2')
+            end
+            # If still no change, try adding after any filter
+            if new_line == line
+              new_line = line.sub(/(--filter\s+"-[^"]*")(\s+)(?!--filter)/, '\\1 --filter "- _CodeSignature"\\2')
+            end
+          end
+          modified = true if new_line != line
+          new_line
+        else
+          line
+        end
+      end
+      
+      if modified
+        File.write(frameworks_script_path, lines.join)
+        puts "✅ Fixed _CodeSignature filter in #{frameworks_script_path}"
+      end
+    end
+  end
 end
