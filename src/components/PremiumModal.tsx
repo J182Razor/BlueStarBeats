@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { premiumService } from '../lib/premiumService';
 
 interface PremiumModalProps {
@@ -7,109 +7,233 @@ interface PremiumModalProps {
 }
 
 const PremiumModal: React.FC<PremiumModalProps> = ({ onClose, onUpgrade }) => {
+  const [hoveredTier, setHoveredTier] = useState<string | null>(null);
   const pricing = premiumService.getPricingInfo();
 
   const features = [
-    'Unlock all 50+ sessions',
-    'All session lengths (5min to 2 hours)',
-    'Advanced protocols (Gamma, custom frequencies)',
-    'Mix BWE with your own music',
-    'Offline mode',
-    'Priority support'
+    { icon: '🎵', text: 'Unlock all 50+ sessions' },
+    { icon: '⏱️', text: 'All session lengths (5min to 2 hours)' },
+    { icon: '🧠', text: 'Advanced protocols (Gamma, custom frequencies)' },
+    { icon: '🎧', text: 'Mix BWE with your own music' },
+    { icon: '📱', text: 'Offline mode' },
+    { icon: '💬', text: 'Priority support' }
+  ];
+
+  const tiers = [
+    {
+      id: 'monthly',
+      name: 'Monthly',
+      price: pricing.monthly.price,
+      period: pricing.monthly.period,
+      buttonText: 'Subscribe',
+      gradient: 'from-gray-600 to-gray-700',
+      popular: false
+    },
+    {
+      id: 'annual',
+      name: 'Annual',
+      price: pricing.annual.price,
+      period: pricing.annual.period,
+      savings: pricing.annual.savings,
+      monthlyPrice: (pricing.annual.price / 12).toFixed(2),
+      buttonText: 'Subscribe',
+      gradient: 'from-purple-600 to-blue-600',
+      popular: true
+    },
+    {
+      id: 'lifetime',
+      name: 'Lifetime',
+      price: pricing.lifetime.price,
+      period: pricing.lifetime.period,
+      buttonText: 'Buy Now',
+      gradient: 'from-yellow-500 to-orange-600',
+      popular: false
+    }
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="card-premium max-w-2xl w-full p-8 relative">
-        {/* Close Button */}
+    <div 
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+      onClick={onClose}
+    >
+      <div 
+        className="glass-elevated max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 md:p-12 relative animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button - Premium Design */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          className="
+            absolute top-6 right-6
+            w-10 h-10 rounded-full
+            bg-gray-800/50 hover:bg-gray-700/50
+            backdrop-blur-sm
+            border border-gray-700/50
+            flex items-center justify-center
+            text-gray-400 hover:text-white
+            transition-all duration-300
+            hover:scale-110 hover:rotate-90
+          "
           aria-label="Close"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-white mb-2">Upgrade to Premium</h2>
-          <p className="text-gray-400">Unlock the full power of brainwave entrainment</p>
+        {/* Header - Premium Design */}
+        <div className="text-center mb-12 animate-slide-up">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 mb-6 shadow-2xl shadow-purple-500/50">
+            <span className="text-4xl">⭐</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
+            <span className="text-gradient">Upgrade to Premium</span>
+          </h2>
+          <p className="text-gray-300 text-lg">Unlock the full power of brainwave entrainment</p>
         </div>
 
-        {/* Features */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-white mb-4">Premium Features</h3>
-          <ul className="space-y-2">
+        {/* Features - Enhanced Design */}
+        <div className="mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+            Premium Features
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((feature, index) => (
-              <li key={index} className="flex items-center gap-3 text-gray-300">
-                <svg className="w-5 h-5 text-brand-golden" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                {feature}
-              </li>
+              <div
+                key={index}
+                className="
+                  flex items-center gap-4
+                  p-4 rounded-xl
+                  bg-gray-800/30 border border-gray-700/50
+                  hover:border-purple-500/30
+                  transition-all duration-300
+                  hover:scale-[1.02]
+                  animate-fade-in
+                "
+                style={{ animationDelay: `${0.15 + index * 0.05}s` }}
+              >
+                <div className="text-2xl">{feature.icon}</div>
+                <span className="text-gray-300 font-medium">{feature.text}</span>
+              </div>
             ))}
-          </ul>
-        </div>
-
-        {/* Pricing Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Monthly */}
-          <div className="card-premium p-6 text-center">
-            <h3 className="text-xl font-bold text-white mb-2">Monthly</h3>
-            <div className="mb-4">
-              <span className="text-3xl font-bold text-brand-golden">${pricing.monthly.price}</span>
-              <span className="text-gray-400">/{pricing.monthly.period}</span>
-            </div>
-            <button
-              onClick={() => onUpgrade('monthly')}
-              className="btn-secondary w-full"
-            >
-              Subscribe
-            </button>
-          </div>
-
-          {/* Annual - Recommended */}
-          <div className="card-highlight p-6 text-center relative">
-            <span className="absolute top-2 right-2 px-2 py-1 bg-brand-golden text-black text-xs font-bold rounded">
-              BEST VALUE
-            </span>
-            <h3 className="text-xl font-bold text-white mb-2">Annual</h3>
-            <div className="mb-2">
-              <span className="text-3xl font-bold text-brand-golden">${pricing.annual.price}</span>
-              <span className="text-gray-400">/{pricing.annual.period}</span>
-            </div>
-            <div className="text-sm text-green-400 mb-4">
-              Save {pricing.annual.savings} • ${(pricing.annual.price / 12).toFixed(2)}/mo
-            </div>
-            <button
-              onClick={() => onUpgrade('annual')}
-              className="btn-primary w-full"
-            >
-              Subscribe
-            </button>
-          </div>
-
-          {/* Lifetime */}
-          <div className="card-premium p-6 text-center">
-            <h3 className="text-xl font-bold text-white mb-2">Lifetime</h3>
-            <div className="mb-4">
-              <span className="text-3xl font-bold text-brand-golden">${pricing.lifetime.price}</span>
-              <span className="text-gray-400">/{pricing.lifetime.period}</span>
-            </div>
-            <button
-              onClick={() => onUpgrade('lifetime')}
-              className="btn-primary w-full"
-            >
-              Buy Now
-            </button>
           </div>
         </div>
 
-        {/* 7-Day Free Trial Note */}
-        <div className="text-center text-sm text-gray-400">
-          <p>Annual plan includes 7-day free trial. Cancel anytime.</p>
+        {/* Pricing Options - Premium Design */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {tiers.map((tier, index) => {
+            const isHovered = hoveredTier === tier.id;
+            const isPopular = tier.popular;
+            
+            return (
+              <div
+                key={tier.id}
+                onMouseEnter={() => setHoveredTier(tier.id)}
+                onMouseLeave={() => setHoveredTier(null)}
+                className={`
+                  relative
+                  p-6 rounded-2xl
+                  border-2 transition-all duration-500
+                  overflow-hidden
+                  animate-scale-in
+                  ${isPopular
+                    ? `bg-gradient-to-br ${tier.gradient} border-transparent shadow-2xl scale-105`
+                    : 'bg-gray-800/50 border-gray-700/50 hover:border-gray-600/50'
+                  }
+                  ${isHovered && !isPopular ? 'scale-[1.02]' : ''}
+                `}
+                style={{ animationDelay: `${0.2 + index * 0.1}s` }}
+              >
+                {/* Popular badge */}
+                {isPopular && (
+                  <div className="absolute top-4 right-4">
+                    <span className="
+                      px-3 py-1
+                      bg-white text-purple-600
+                      text-xs font-bold
+                      rounded-full
+                      shadow-lg
+                      animate-pulse
+                    ">
+                      BEST VALUE
+                    </span>
+                  </div>
+                )}
+                
+                {/* Shine effect */}
+                <div className="
+                  absolute inset-0
+                  bg-gradient-to-r from-transparent via-white/10 to-transparent
+                  -translate-x-full group-hover:translate-x-full
+                  transition-transform duration-1000
+                " />
+                
+                <div className="relative z-10 text-center">
+                  <h3 className={`
+                    text-2xl font-bold mb-4
+                    ${isPopular ? 'text-white' : 'text-white'}
+                  `}>
+                    {tier.name}
+                  </h3>
+                  
+            <div className="mb-4">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className={`
+                        text-4xl font-extrabold
+                        ${isPopular ? 'text-white' : 'text-gradient-gold'}
+                      `}>
+                        ${tier.price}
+                      </span>
+                      <span className="text-gray-400 text-sm">/{tier.period}</span>
+          </div>
+
+                    {tier.savings && (
+                      <div className="mt-2 text-sm text-green-300 font-semibold">
+                        Save {tier.savings} • ${tier.monthlyPrice}/mo
+            </div>
+                    )}
+            </div>
+                  
+            <button
+                    onClick={() => onUpgrade(tier.id as 'monthly' | 'annual' | 'lifetime')}
+                    className={`
+                      w-full py-3 px-6 rounded-full
+                      font-semibold text-white
+                      transition-all duration-300
+                      transform hover:scale-105
+                      ${isPopular
+                        ? 'bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30'
+                        : `bg-gradient-to-r ${tier.gradient} shadow-lg hover:shadow-xl`
+                      }
+                    `}
+                  >
+                    {tier.buttonText}
+            </button>
+          </div>
+
+                {/* Bottom accent line */}
+                <div className={`
+                  absolute bottom-0 left-0 right-0 h-1
+                  bg-gradient-to-r ${tier.gradient}
+                  transform ${isPopular ? 'scale-x-100' : 'scale-x-0'}
+                  transition-transform duration-500 origin-left
+                `} />
+              </div>
+            );
+          })}
+            </div>
+
+        {/* Free Trial Note - Enhanced */}
+        <div className="text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-blue-900/30 border border-blue-700/30 rounded-full">
+            <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <p className="text-sm text-blue-200">
+              Annual plan includes 7-day free trial. Cancel anytime.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -117,4 +241,3 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ onClose, onUpgrade }) => {
 };
 
 export default PremiumModal;
-

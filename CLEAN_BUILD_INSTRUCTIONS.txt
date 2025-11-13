@@ -1,0 +1,45 @@
+═══════════════════════════════════════════════════════════════
+  FIX CAPACITOR BUILD ERROR - CLEAN BUILD INSTRUCTIONS
+═══════════════════════════════════════════════════════════════
+
+The Capacitor header file has been fixed, but Xcode is using 
+cached build artifacts. Follow these steps:
+
+STEP 1: Clean Xcode Build Cache
+────────────────────────────────
+1. In Xcode: Product → Clean Build Folder (Shift + Cmd + K)
+2. Close Xcode completely (Quit the application)
+
+STEP 2: Clean DerivedData (Terminal)
+─────────────────────────────────────
+Open Terminal and run:
+  rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+STEP 3: Clean and Reinstall Pods (Terminal)
+────────────────────────────────────────────
+Run these commands:
+  cd "/Users/johnlawal/Desktop/2025 - 2026 Projects/BlueStarBeats/ios/App"
+  rm -rf Pods Podfile.lock .symlinks
+  export LANG=en_US.UTF-8
+  pod install
+
+STEP 4: Rebuild in Xcode
+─────────────────────────
+1. Reopen: ios/App/App.xcworkspace
+2. Product → Clean Build Folder again (Shift + Cmd + K)
+3. Build: Press Cmd + R
+
+═══════════════════════════════════════════════════════════════
+
+If the error persists, try a full reinstall:
+
+  cd "/Users/johnlawal/Desktop/2025 - 2026 Projects/BlueStarBeats"
+  rm -rf node_modules package-lock.json
+  rm -rf ios/App/Pods ios/App/Podfile.lock
+  npm install
+  cd ios/App
+  export LANG=en_US.UTF-8
+  pod install
+
+═══════════════════════════════════════════════════════════════
+

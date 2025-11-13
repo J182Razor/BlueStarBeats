@@ -90,7 +90,7 @@ A modern, minimalist web application for brainwave entrainment using binaural be
 
 ## 📱 iOS App
 
-An iOS version of Blue Star Beats is available! See [IOS_SETUP.md](./IOS_SETUP.md) for detailed iOS setup and build instructions.
+An iOS version of Blue Star Beats is available! See [docs/IOS_SETUP.md](./docs/IOS_SETUP.md) for detailed iOS setup and build instructions.
 
 **Quick Start for iOS:**
 ```bash
@@ -101,7 +101,7 @@ npm run ios:open
 
 ## 🛠️ Installation
 
-See [INSTALLATION.md](./INSTALLATION.md) for detailed installation instructions.
+See [docs/IOS_SETUP.md](./docs/IOS_SETUP.md) for installation instructions.
 
 ### Quick Start
 
@@ -124,7 +124,7 @@ npm run build
 
 ## 📖 Usage
 
-See [USAGE.md](./USAGE.md) for comprehensive usage documentation.
+See [docs/USAGE.md](./docs/USAGE.md) for comprehensive usage documentation.
 
 ### Getting Started
 
@@ -208,20 +208,28 @@ BlueStarBeats/
 
 ## 🐛 Troubleshooting
 
-### Audio Not Playing
+See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) for comprehensive troubleshooting guide.
+
+### Quick Fixes
+
+**Audio Not Playing:**
 - Ensure your browser supports Web Audio API
 - Check browser permissions for audio
 - Try clicking the play button to resume audio context
 
-### Headphones Not Working
+**Headphones Not Working:**
 - Binaural beats require stereo headphones
 - Check your system audio settings
 - Ensure headphones are properly connected
 
-### Performance Issues
+**Performance Issues:**
 - Close other browser tabs
 - Disable browser extensions
 - Use a modern browser (Chrome, Firefox, Edge, Safari)
+
+**iOS Build Issues:**
+- See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) for detailed solutions
+- Run `./scripts/diagnose-build-error.sh` to diagnose issues
 
 ## 📝 License
 

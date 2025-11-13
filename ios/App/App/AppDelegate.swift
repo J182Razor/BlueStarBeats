@@ -1,8 +1,11 @@
 import UIKit
 import Capacitor
 import AVFoundation
+#if DEBUG
+import InjectHotReload
+#endif
 
-@UIApplicationMain
+@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
@@ -10,6 +13,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Configure audio session for background playback and mixing with other apps
         configureAudioSession()
+        // Capacitor is initialized automatically by CAPBridgeViewController in Main.storyboard
         return true
     }
     

@@ -217,7 +217,7 @@ function App() {
         {/* Starry Night Sky Background */}
         <div className="starry-night"></div>
 
-        <div className="relative z-10 container mx-auto px-4 py-8">
+        <div className="relative z-10 container mx-auto px-4 py-8 safe-area-inset">
           {/* Header */}
           <header className="text-center mb-8">
             <div className="logo-container mb-6">
@@ -230,44 +230,92 @@ function App() {
             </div>
           </header>
 
-          {/* Navigation Bar */}
-          <div className="flex justify-center gap-4 mb-8">
+          {/* Navigation Bar - Premium Design */}
+          <div className="flex flex-wrap justify-center gap-3 mb-10 animate-fade-in">
             <button
               onClick={() => setShowSessionLibrary(true)}
-              className="btn-secondary"
+              className="
+                px-6 py-3 rounded-full
+                bg-gray-800/50 hover:bg-gray-700/50
+                backdrop-blur-sm
+                border border-gray-700/50 hover:border-gray-600/50
+                text-white font-semibold
+                transition-all duration-300
+                transform hover:scale-105
+                flex items-center gap-2
+              "
             >
-              📚 Session Library
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Session Library
             </button>
             <button
               onClick={() => setShowProMode(!showProMode)}
-              className={`${showProMode ? 'btn-primary' : 'btn-secondary'}`}
+              className={`
+                px-6 py-3 rounded-full
+                font-semibold
+                transition-all duration-300
+                transform hover:scale-105
+                flex items-center gap-2
+                ${showProMode 
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/50' 
+                  : 'bg-gray-800/50 hover:bg-gray-700/50 backdrop-blur-sm border border-gray-700/50 hover:border-gray-600/50 text-white'
+                }
+              `}
             >
-              ⚙️ Pro Mode
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Pro Mode
             </button>
             {!premiumService.isPremium() && (
               <button
                 onClick={() => setShowPremiumModal(true)}
-                className="btn-primary"
+                className="
+                  px-6 py-3 rounded-full
+                  bg-gradient-to-r from-yellow-500 to-yellow-600
+                  hover:from-yellow-400 hover:to-yellow-500
+                  text-white font-bold
+                  shadow-lg shadow-yellow-500/50
+                  transition-all duration-300
+                  transform hover:scale-105
+                  flex items-center gap-2
+                  animate-pulse
+                "
               >
-                ⭐ Upgrade
+                <span className="text-lg">⭐</span>
+                Upgrade
               </button>
             )}
           </div>
 
-          {/* Current Session Info */}
+          {/* Current Session Info - Premium Design */}
           {currentSession && sessionLength && (
-            <div className="card-premium p-4 mb-6 text-center">
-              <h3 className="text-xl font-bold text-white mb-2">{currentSession.name}</h3>
-              <p className="text-gray-300 text-sm">{currentSession.description}</p>
+            <div className="
+              card-premium p-6 mb-8 text-center
+              animate-slide-up
+              border-2 border-purple-500/30
+              bg-gradient-to-br from-purple-900/20 to-blue-900/20
+            ">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <h3 className="text-2xl font-bold text-white">{currentSession.name}</h3>
+              </div>
+              <p className="text-gray-300 text-base leading-relaxed">{currentSession.description}</p>
             </div>
           )}
 
           {/* Main control panel */}
           <div className="max-w-6xl mx-auto">
-            {/* Full-width Waveform Visualization */}
-            <div className="mb-8">
-              <div className="card-premium p-8">
-                <h2 className="text-2xl font-bold text-white mb-8 text-center">Waveform Visualization</h2>
+            {/* Full-width Waveform Visualization - Premium Design */}
+            <div className="mb-8 animate-fade-in">
+              <div className="card-premium p-8 border-2 border-purple-500/20">
+                <h2 className="text-3xl font-bold text-white mb-8 text-center flex items-center justify-center gap-3">
+                  <div className="w-1 h-8 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                  <span className="text-gradient">Waveform Visualization</span>
+                </h2>
                 <Oscilloscope
                   audioEngine={audioEngine}
                   isPlaying={isPlaying}
@@ -275,10 +323,10 @@ function App() {
               </div>
             </div>
 
-            {/* Session Timer */}
+            {/* Session Timer - Premium Design */}
             {sessionLength && (
-              <div className="mb-8">
-                <div className="card-premium p-6">
+              <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                <div className="card-premium p-8 border-2 border-blue-500/20">
                   <SessionTimer
                     duration={sessionLength * 60}
                     isPlaying={isPlaying}
@@ -293,8 +341,11 @@ function App() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Left column - Audio Mode and Waveform Selection */}
                 <div className="space-y-8">
-                  <div className="card-premium p-8">
-                    <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Mode</h2>
+                  <div className="card-premium p-8 border-2 border-purple-500/20 animate-fade-in">
+                    <h2 className="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center gap-2">
+                      <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                      Audio Mode
+                    </h2>
                     <div className="space-y-8">
                       <ModeSelector
                         mode={settings.mode}
@@ -310,8 +361,11 @@ function App() {
 
                 {/* Right column - Frequency Controls and Audio Controls */}
                 <div className="space-y-8">
-                  <div className="card-premium p-8">
-                    <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequency Controls</h2>
+                  <div className="card-premium p-8 border-2 border-blue-500/20 animate-fade-in">
+                    <h2 className="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center gap-2">
+                      <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                      Frequency Controls
+                    </h2>
                     <div className="space-y-8">
                       <FrequencyControl
                         label="Carrier Frequency"
@@ -335,8 +389,11 @@ function App() {
                   </div>
                   
                   {/* Audio Controls - Under Frequency Controls in Pro Mode */}
-                  <div className="card-premium p-8">
-                    <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
+                  <div className="card-premium p-8 border-2 border-cyan-500/20 animate-fade-in">
+                    <h2 className="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center gap-2">
+                      <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                      Audio Controls
+                    </h2>
                     <AudioControlPanel
                       isPlaying={isPlaying}
                       volume={settings.volume}
@@ -353,8 +410,11 @@ function App() {
             {!showProMode && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Frequency Controls */}
-                <div className="card-premium p-8">
-                  <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequency Controls</h2>
+                <div className="card-premium p-8 border-2 border-blue-500/20 animate-fade-in">
+                  <h2 className="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center gap-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                    Frequency Controls
+                  </h2>
                   <div className="space-y-8">
                     <FrequencyControl
                       label="Carrier Frequency"
@@ -378,8 +438,11 @@ function App() {
                 </div>
                 
                 {/* Audio Controls */}
-                <div className="card-premium p-8">
-                  <h2 className="text-2xl font-bold text-white mb-8 text-center">Audio Controls</h2>
+                <div className="card-premium p-8 border-2 border-cyan-500/20 animate-fade-in">
+                  <h2 className="text-2xl font-bold text-white mb-8 text-center flex items-center justify-center gap-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+                    Audio Controls
+                  </h2>
                   <AudioControlPanel
                     isPlaying={isPlaying}
                     volume={settings.volume}
@@ -391,22 +454,43 @@ function App() {
               </div>
             )}
 
-            {/* Premium CTA Section */}
+            {/* Premium CTA Section - Enhanced */}
             {!premiumService.isPremium() && (
-              <div className="text-center mb-8">
-                <div className="card-highlight p-8 max-w-2xl mx-auto">
-                  <h3 className="text-3xl font-bold text-white mb-4">
-                    Tune Your Mind. <span className="text-brand-pink">Unlock Your State.</span>
-                  </h3>
-                  <p className="text-gray-300 mb-6">
-                    Unlock all 50+ sessions, advanced protocols, and premium features
-                  </p>
-                  <button 
-                    onClick={() => setShowPremiumModal(true)}
-                    className="btn-primary text-lg font-bold"
-                  >
-                    Get Lifetime Access
-                  </button>
+              <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <div className="
+                  p-10 max-w-3xl mx-auto
+                  rounded-2xl
+                  bg-gradient-to-br from-purple-900/40 via-blue-900/40 to-purple-900/40
+                  border-2 border-purple-500/30
+                  backdrop-blur-md
+                  shadow-2xl
+                  relative overflow-hidden
+                ">
+                  {/* Animated background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-purple-600/10 animate-pulse" />
+                  
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mb-6 shadow-lg shadow-yellow-500/50">
+                      <span className="text-3xl">⭐</span>
+                    </div>
+                    <h3 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+                      <span className="text-gradient">Tune Your Mind.</span>
+                      <br />
+                      <span className="text-white">Unlock Your State.</span>
+                    </h3>
+                    <p className="text-gray-300 mb-8 text-lg max-w-xl mx-auto">
+                      Unlock all 50+ sessions, advanced protocols, and premium features
+                    </p>
+                    <button 
+                      onClick={() => setShowPremiumModal(true)}
+                      className="
+                        btn-premium text-lg font-bold px-10 py-4
+                        transform hover:scale-105
+                      "
+                    >
+                      Get Lifetime Access
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
