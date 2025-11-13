@@ -89,6 +89,51 @@ pod install
 
 Then rebuild in Xcode.
 
+## Troubleshooting PhaseScriptExecution Errors
+
+If you get a "Command PhaseScriptExecution failed with a nonzero exit code" error:
+
+### Step 1: Reinstall Pods
+
+The Pods scripts may need to be regenerated with the fix:
+
+```bash
+cd ios/App
+rm -rf Pods Podfile.lock
+pod install
+```
+
+### Step 2: Clean Build
+
+After reinstalling pods:
+
+1. In Xcode: **Product → Clean Build Folder** (`Shift + Cmd + K`)
+2. Delete derived data:
+   ```bash
+   rm -rf ~/Library/Developer/Xcode/DerivedData/App-*
+   ```
+
+### Step 3: Verify Pods Script
+
+Check if the Pods script was patched correctly:
+
+```bash
+cd ios/App
+grep "_CodeSignature" "Pods/Target Support Files/Pods-BlueStarBeats/Pods-BlueStarBeats-frameworks.sh"
+```
+
+You should see `--filter "- _CodeSignature"` in the rsync commands.
+
+### Step 4: Manual Patch (If Needed)
+
+If the post_install hook didn't work, run the manual patch script:
+
+```bash
+./fix-pods-script.sh
+```
+
+Then clean and rebuild.
+
 ## Verification
 
 After applying the fix, try building again. The sandbox error should be resolved because rsync will no longer attempt to copy `_CodeSignature` directories.
