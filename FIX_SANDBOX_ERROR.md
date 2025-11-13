@@ -93,29 +93,51 @@ Then rebuild in Xcode.
 
 If you get a "Command PhaseScriptExecution failed with a nonzero exit code" error:
 
-### Step 1: Reinstall Pods
+**Most Common Cause:** The Pods directory doesn't exist or the Pods script is missing. Xcode is trying to run a script that doesn't exist.
 
-The Pods scripts may need to be regenerated with the fix:
+### Quick Fix Script
+
+Run the automated fix script:
+
+```bash
+./fix-phase-script-error.sh
+```
+
+This will:
+1. Check if Pods are installed
+2. Install Pods if missing
+3. Verify the framework script exists
+4. Patch the script if needed
+
+### Manual Fix Steps
+
+If the script doesn't work, follow these steps:
+
+#### Step 1: Install Pods
+
+The Pods directory and scripts must exist before building:
 
 ```bash
 cd ios/App
-rm -rf Pods Podfile.lock
 pod install
 ```
 
-### Step 2: Clean Build
+**Important:** You must run `pod install` in the `ios/App` directory, not the root directory.
 
-After reinstalling pods:
+#### Step 2: Verify Pods Script Exists
 
-1. In Xcode: **Product → Clean Build Folder** (`Shift + Cmd + K`)
-2. Delete derived data:
-   ```bash
-   rm -rf ~/Library/Developer/Xcode/DerivedData/App-*
-   ```
+Check if the script was created:
 
-### Step 3: Verify Pods Script
+```bash
+cd ios/App
+ls -la "Pods/Target Support Files/Pods-BlueStarBeats/Pods-BlueStarBeats-frameworks.sh"
+```
 
-Check if the Pods script was patched correctly:
+If this file doesn't exist, `pod install` didn't complete successfully. Check for errors in the pod install output.
+
+#### Step 3: Verify Script Was Patched
+
+Check if the Pods script has the _CodeSignature filter:
 
 ```bash
 cd ios/App
@@ -124,15 +146,40 @@ grep "_CodeSignature" "Pods/Target Support Files/Pods-BlueStarBeats/Pods-BlueSta
 
 You should see `--filter "- _CodeSignature"` in the rsync commands.
 
-### Step 4: Manual Patch (If Needed)
-
-If the post_install hook didn't work, run the manual patch script:
+If not, run the manual patch:
 
 ```bash
+cd ../..
 ./fix-pods-script.sh
 ```
 
-Then clean and rebuild.
+#### Step 4: Clean Build
+
+After fixing:
+
+1. In Xcode: **Product → Clean Build Folder** (`Shift + Cmd + K`)
+2. Delete derived data:
+   ```bash
+   rm -rf ~/Library/Developer/Xcode/DerivedData/App-*
+   ```
+3. Close and reopen Xcode workspace
+4. Rebuild the project
+
+### Common Issues
+
+**Error: "Pods directory not found"**
+- Run `pod install` in `ios/App` directory
+- Make sure you're using the workspace (`.xcworkspace`), not the project (`.xcodeproj`)
+
+**Error: "Script not found"**
+- Pods weren't installed correctly
+- Check `pod install` output for errors
+- Try: `rm -rf Pods Podfile.lock && pod install`
+
+**Error persists after pod install**
+- The post_install hook may have failed silently
+- Run `./fix-pods-script.sh` to manually patch
+- Check Podfile syntax: `ruby -c ios/App/Podfile`
 
 ## Verification
 
