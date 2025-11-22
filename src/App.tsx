@@ -1,9 +1,11 @@
 import { deviceControls } from './lib/deviceControls';
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { AudioEngine, AudioSettings } from './lib/audioEngine';
-import { SessionProtocol, GoalType, SessionLength } from './lib/sessionProtocols';
+import { SessionProtocol, GoalType, SessionLength, getSessionById } from './lib/sessionProtocols';
 import { premiumService } from './lib/premiumService';
 import { HapticFeedbackService } from './lib/hapticFeedbackService';
+import { userPreferences } from './lib/userPreferences';
+import { AudioPreset } from './lib/types';
 import AudioControlPanel from './components/AudioControlPanel';
 import FrequencyControl from './components/FrequencyControl';
 import ModeSelector from './components/ModeSelector';
@@ -12,6 +14,9 @@ import Oscilloscope from './components/Oscilloscope';
 import SessionTimer from './components/SessionTimer';
 import SessionLibrary from './components/SessionLibrary';
 import PremiumModal from './components/PremiumModal';
+import AudioPresetSelector from './components/AudioPresetSelector';
+import SessionRating from './components/SessionRating';
+import SessionHistory from './components/SessionHistory';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
@@ -24,6 +29,9 @@ function App() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showProMode, setShowProMode] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showSessionHistory, setShowSessionHistory] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const sessionStartTimeRef = useRef<number | null>(null);
   const [settings, setSettings] = useState<AudioSettings>({
     mode: 'binaural',
     waveform: 'sine',
@@ -149,6 +157,12 @@ function App() {
       setIsPlaying(true);
       deviceControls.updateNowPlaying(currentSession, true);
       
+      // Track session start time
+      if (currentSession && sessionLength) {
+        sessionStartTimeRef.current = Date.now();
+        userPreferences.addToRecentlyPlayed(currentSession.id);
+      }
+      
       if (currentSession?.frequencyRamp) {
         setupFrequencyRamp(currentSession);
       }
@@ -158,7 +172,7 @@ function App() {
       HapticFeedbackService.notification('error');
       alert(`Failed to start audio: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your device settings and try again.`);
     }
-  }, [isPlaying, audioEngine, settings, currentSession, setupFrequencyRamp]);
+  }, [isPlaying, audioEngine, settings, currentSession, sessionLength, setupFrequencyRamp]);
 
   const handleStop = useCallback(() => {
     HapticFeedbackService.impact('light');
@@ -170,6 +184,7 @@ function App() {
       clearInterval(rampIntervalRef.current);
       rampIntervalRef.current = null;
     }
+    sessionStartTimeRef.current = null;
   }, [audioEngine, currentSession]);
 
   useEffect(() => {
@@ -201,7 +216,35 @@ function App() {
 
   const handleSessionComplete = useCallback(() => {
     handleStop();
-  }, [handleStop]);
+    
+    // Track session completion
+    if (currentSession && sessionLength && sessionStartTimeRef.current) {
+      const actualDuration = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+      const targetDuration = sessionLength * 60;
+      const completed = actualDuration >= targetDuration * 0.8; // 80% completion threshold
+      
+      userPreferences.addSessionHistory({
+        sessionId: currentSession.id,
+        date: new Date(),
+        duration: actualDuration,
+        completed,
+        effectivenessRating: undefined,
+        notes: undefined
+      });
+      
+      // Add to recently played
+      userPreferences.addToRecentlyPlayed(currentSession.id);
+      
+      // Show rating modal if completed
+      if (completed) {
+        setTimeout(() => {
+          setShowRatingModal(true);
+        }, 500);
+      }
+    }
+    
+    sessionStartTimeRef.current = null;
+  }, [handleStop, currentSession, sessionLength]);
 
   const handleVolumeChange = useCallback((volume: number) => {
     const newSettings = { ...settings, volume };
@@ -232,6 +275,40 @@ function App() {
     setSettings(newSettings);
     audioEngine.updateSettings(newSettings);
   }, [settings, audioEngine]);
+
+  const handlePresetSelect = useCallback((preset: AudioPreset) => {
+    const newSettings: AudioSettings = {
+      carrierFrequency: preset.carrierFrequency,
+      beatFrequency: preset.beatFrequency,
+      waveform: preset.waveform,
+      mode: preset.mode,
+      volume: settings.volume
+    };
+    setSettings(newSettings);
+    if (isPlaying) {
+      audioEngine.updateSettings(newSettings);
+    } else {
+      audioEngine.updateSettings(newSettings);
+    }
+  }, [settings.volume, audioEngine, isPlaying]);
+
+  const handleRateSession = useCallback((rating: number, notes?: string) => {
+    if (currentSession && sessionStartTimeRef.current) {
+      const history = userPreferences.getSessionHistory();
+      const lastEntry = history.find(
+        e => e.sessionId === currentSession.id && 
+        Math.abs(e.date.getTime() - sessionStartTimeRef.current!) < 60000
+      );
+      
+      if (lastEntry) {
+        // Remove old entry and add updated one
+        const filtered = history.filter(e => e !== lastEntry);
+        filtered.push({ ...lastEntry, effectivenessRating: rating, notes });
+        localStorage.setItem('bluestarbeats_session_history', JSON.stringify(filtered));
+      }
+    }
+    setShowRatingModal(false);
+  }, [currentSession]);
 
   const handleUpgrade = useCallback((tier: 'monthly' | 'annual' | 'lifetime') => {
     premiumService.setTier(tier);
@@ -419,6 +496,15 @@ function App() {
                 <div className="space-y-4 sm:space-y-6">
                   <div className="glass-card-silver p-4 sm:p-6 lg:p-8">
                     <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-silver-light mb-4 sm:mb-6 text-center">
+                      Audio Presets
+                    </h2>
+                    <AudioPresetSelector
+                      onPresetSelect={handlePresetSelect}
+                      currentSettings={settings}
+                    />
+                  </div>
+                  <div className="glass-card-silver p-4 sm:p-6 lg:p-8">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-silver-light mb-4 sm:mb-6 text-center">
                       Audio Mode
                     </h2>
                     <div className="space-y-4 sm:space-y-6">
@@ -509,6 +595,18 @@ function App() {
               </button>
 
               <button
+                onClick={() => setShowSessionHistory(true)}
+                className="flex flex-col items-center gap-1 sm:gap-2 text-white hover:text-gray-300 transition-colors min-w-[50px] sm:min-w-[60px]"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <span className="text-xs font-medium">History</span>
+              </button>
+
+              <button
                 onClick={() => setShowProMode(!showProMode)}
                 className={`flex flex-col items-center gap-1 sm:gap-2 transition-colors min-w-[50px] sm:min-w-[60px] ${showProMode ? 'text-blue-400' : 'text-white hover:text-gray-300'}`}
               >
@@ -551,6 +649,28 @@ function App() {
           <PremiumModal
             onClose={() => setShowPremiumModal(false)}
             onUpgrade={handleUpgrade}
+          />
+        )}
+
+        {showSessionHistory && (
+          <SessionHistory
+            onClose={() => setShowSessionHistory(false)}
+            onSessionSelect={(sessionId) => {
+              const session = getSessionById(sessionId);
+              if (session) {
+                handleSessionSelect(session, session.lengths[0]);
+                setShowSessionHistory(false);
+              }
+            }}
+          />
+        )}
+
+        {showRatingModal && currentSession && (
+          <SessionRating
+            sessionId={currentSession.id}
+            sessionName={currentSession.name}
+            onRate={handleRateSession}
+            onClose={() => setShowRatingModal(false)}
           />
         )}
       </div>
