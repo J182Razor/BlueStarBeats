@@ -1,32 +1,60 @@
 import UIKit
 import Capacitor
 import AVFoundation
+import MediaPlayer
 #if DEBUG
 import InjectHotReload
 #endif
 
-@main
+@UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Configure audio session for background playback and mixing with other apps
+        // Override point for customization after application launch.
+        
+        // Configure audio session for background playback and device controls
         configureAudioSession()
-        // Capacitor is initialized automatically by CAPBridgeViewController in Main.storyboard
+        setupRemoteTransportControls()
+        
         return true
     }
     
     private func configureAudioSession() {
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            // Use .playback category with .mixWithOthers option to allow mixing with other audio apps
             try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
             try audioSession.setActive(true)
-            print("Audio session configured for background playback and mixing")
+            print("Audio session configured for background playback")
         } catch {
             print("Failed to configure audio session: \(error.localizedDescription)")
         }
+    }
+    
+    private func setupRemoteTransportControls() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+        
+        // Play command
+        commandCenter.playCommand.addTarget { [weak self] event in
+            NotificationCenter.default.post(name: .playAudio, object: nil)
+            return .success
+        }
+        
+        // Pause command
+        commandCenter.pauseCommand.addTarget { [weak self] event in
+            NotificationCenter.default.post(name: .pauseAudio, object: nil)
+            return .success
+        }
+        
+        // Toggle play/pause
+        commandCenter.togglePlayPauseCommand.addTarget { [weak self] event in
+            NotificationCenter.default.post(name: .togglePlayPause, object: nil)
+            return .success
+        }
+        
+        // Enable background modes
+        UIApplication.shared.beginReceivingRemoteControlEvents()
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -37,17 +65,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        
-        // Ensure audio session remains active in background
-        do {
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print("Failed to activate audio session in background: \(error.localizedDescription)")
-        }
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        
+        // Reconfigure audio session when returning from background
+        configureAudioSession()
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
@@ -55,7 +79,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Re-activate audio session when app becomes active
         do {
-            try AVAudioSession.sharedInstance().setActive(true)
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+            try audioSession.setActive(true)
+            print("Audio session reactivated for foreground")
         } catch {
             print("Failed to activate audio session: \(error.localizedDescription)")
         }
@@ -78,4 +105,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+    override func remoteControlReceived(with event: UIEvent?) {
+        super.remoteControlReceived(with: event)
+        
+        guard let event = event else { return }
+        
+        switch event.subtype {
+        case .remoteControlPlay:
+            NotificationCenter.default.post(name: .playAudio, object: nil)
+        case .remoteControlPause:
+            NotificationCenter.default.post(name: .pauseAudio, object: nil)
+        case .remoteControlTogglePlayPause:
+            NotificationCenter.default.post(name: .togglePlayPause, object: nil)
+        default:
+            break
+        }
+    }
+}
+
+// Notification extensions for audio control
+extension Notification.Name {
+    static let playAudio = Notification.Name("playAudio")
+    static let pauseAudio = Notification.Name("pauseAudio")
+    static let togglePlayPause = Notification.Name("togglePlayPause")
 }

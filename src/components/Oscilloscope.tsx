@@ -142,33 +142,52 @@ const Oscilloscope: React.FC<OscilloscopeProps> = ({
   }, [isPlaying, audioEngine]);
 
   const animate = useCallback(() => {
+    if (!isPlaying) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
+      }
+      return;
+    }
     draw();
     animationRef.current = requestAnimationFrame(animate);
-  }, [draw]);
+  }, [draw, isPlaying]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     // Set canvas size
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+    };
     
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Only animate when playing to reduce lag
+    if (isPlaying) {
+      animate();
+    } else {
+      // Draw once when not playing
+      draw();
     }
 
-    // Start animation
-    animate();
-
     return () => {
+      window.removeEventListener('resize', resizeCanvas);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [animate]);
+  }, [animate, draw, isPlaying]);
 
   return (
     <div className="waveform-container relative animate-fade-in">

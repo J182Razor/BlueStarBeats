@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 
 interface WaveformSelectorProps {
   waveform: 'sine' | 'square' | 'triangle' | 'sawtooth';
@@ -94,13 +94,13 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
-        <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+      <h3 className="text-lg sm:text-xl font-bold text-white text-center flex items-center justify-center gap-2">
+        <div className="w-1 h-5 sm:h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
         Waveform Type
       </h3>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
         {waveforms.map((wave) => {
           const isActive = waveform === wave.type;
           const isHovered = hoveredWaveform === wave.type;
@@ -113,7 +113,7 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
               onMouseLeave={() => setHoveredWaveform(null)}
               className={`
                 group relative
-                p-6 rounded-xl
+                p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl
                 border-2 transition-all duration-500
                 overflow-hidden
                 ${isActive
@@ -142,8 +142,8 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
               <div className="relative z-10 flex flex-col items-center gap-3">
                 {/* Waveform Visual with enhanced styling */}
                 <div className={`
-                  w-full h-16 p-2
-                  bg-black/20 rounded-lg
+                  w-full h-12 sm:h-14 lg:h-16 p-1.5 sm:p-2
+                  bg-black/20 rounded-md sm:rounded-lg
                   flex items-center justify-center
                   transition-all duration-300
                   ${isActive ? 'scale-110' : ''}
@@ -158,13 +158,13 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
                 {/* Waveform Info */}
                 <div className="text-center">
                   <h4 className={`
-                    font-bold text-lg mb-1 transition-colors duration-300
+                    font-bold text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1 transition-colors duration-300
                     ${isActive ? 'text-white' : 'text-white'}
                   `}>
                     {wave.name}
                   </h4>
                   <p className={`
-                    text-sm transition-colors duration-300
+                    text-xs sm:text-sm transition-colors duration-300
                     ${isActive ? 'text-white/90' : 'text-gray-300'}
                   `}>
                     {wave.description}
@@ -195,18 +195,18 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
       <div className="
         bg-gradient-to-br from-gray-800/50 to-gray-900/50
         border border-gray-700/50
-        rounded-xl p-5
+        rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5
         backdrop-blur-sm
         transition-all duration-300
         hover:border-purple-500/30
       ">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
             </svg>
           </div>
-          <p className="text-sm text-gray-300 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
             <span className="font-semibold text-white">Each waveform has unique characteristics:</span> 
             {' '}Sine waves are pure and smooth, square waves are sharp and digital, 
             triangle waves are soft and mellow, and sawtooth waves are bright and buzzy. 
@@ -218,4 +218,4 @@ const WaveformSelector: React.FC<WaveformSelectorProps> = ({ waveform, onChange 
   );
 };
 
-export default WaveformSelector;
+export default memo(WaveformSelector);

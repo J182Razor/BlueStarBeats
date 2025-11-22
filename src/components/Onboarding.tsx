@@ -40,7 +40,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onGoalSelected }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-main-gradient relative flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen bg-main-gradient relative flex items-center justify-center p-4 pb-24 overflow-hidden">
       {/* Enhanced Starry Night Sky Background */}
       <div className="starry-night"></div>
       

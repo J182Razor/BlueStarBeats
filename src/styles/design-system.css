@@ -348,7 +348,19 @@
 }
 
 /* ========== RESPONSIVE UTILITIES ========== */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
+  :root {
+    --font-size-5xl: 1.875rem;
+    --font-size-4xl: 1.5rem;
+    --font-size-3xl: 1.25rem;
+    --font-size-2xl: 1.125rem;
+    --spacing-8: 1.5rem;
+    --spacing-6: 1.25rem;
+    --spacing-4: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
   :root {
     --font-size-5xl: 2.25rem;
     --font-size-4xl: 1.875rem;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo } from 'react';
 
 interface ModeSelectorProps {
   mode: 'binaural' | 'isochronic';
@@ -6,7 +6,6 @@ interface ModeSelectorProps {
 }
 
 const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, onChange }) => {
-  const [hoveredMode, setHoveredMode] = useState<'binaural' | 'isochronic' | null>(null);
 
   const modes = [
     {
@@ -36,33 +35,24 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, onChange }) => {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
-        <div className="w-1 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full" />
-        Audio Mode
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {modes.map((modeOption) => {
           const isActive = mode === modeOption.type;
-          const isHovered = hoveredMode === modeOption.type;
           
           return (
             <button
               key={modeOption.type}
               onClick={() => onChange(modeOption.type)}
-              onMouseEnter={() => setHoveredMode(modeOption.type)}
-              onMouseLeave={() => setHoveredMode(null)}
               className={`
                 group relative
-                p-8 rounded-2xl
+                p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl
                 border-2 transition-all duration-500
                 overflow-hidden
                 ${isActive
                   ? `bg-gradient-to-br ${modeOption.gradient} border-transparent shadow-2xl scale-105`
                   : 'bg-gray-800/50 border-gray-700/50 hover:border-gray-600/50'
                 }
-                ${isHovered && !isActive ? 'scale-[1.02]' : ''}
               `}
             >
               {/* Animated background gradient */}
@@ -84,23 +74,23 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, onChange }) => {
               <div className="relative z-10 flex flex-col items-center text-center">
                 {/* Icon with glow effect */}
                 <div className={`
-                  mb-4 transition-all duration-300
+                  mb-3 sm:mb-4 transition-all duration-300
                   ${isActive ? 'scale-110' : 'scale-100'}
                   ${modeOption.color}
                   ${isActive ? 'drop-shadow-[0_0_20px_currentColor]' : ''}
                 `}>
-                  {modeOption.icon}
+                  <div className="w-8 h-8 sm:w-10 sm:h-10">{modeOption.icon}</div>
                 </div>
                 
                 <h4 className={`
-                  text-2xl font-bold mb-3 transition-colors duration-300
+                  text-lg sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3 transition-colors duration-300
                   ${isActive ? 'text-white' : 'text-white'}
                 `}>
                   {modeOption.name}
                 </h4>
                 
                 <p className={`
-                  text-sm leading-relaxed transition-colors duration-300
+                  text-xs sm:text-sm leading-relaxed transition-colors duration-300
                   ${isActive ? 'text-white/90' : 'text-gray-300'}
                 `}>
                   {modeOption.description}
@@ -131,17 +121,17 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, onChange }) => {
       <div className="
         bg-gradient-to-br from-blue-900/30 to-cyan-900/30
         border border-blue-700/30
-        rounded-xl p-5
+        rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5
         backdrop-blur-sm
         transition-all duration-300
         hover:border-blue-600/50
         hover:shadow-lg hover:shadow-blue-500/20
       ">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">💡</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl sm:text-2xl">💡</span>
           </div>
-          <p className="text-sm text-blue-200 leading-relaxed">
+          <p className="text-xs sm:text-sm text-blue-200 leading-relaxed">
             <span className="font-semibold">Pro Tip:</span> Use headphones for the best binaural beats experience. 
             The effect requires stereo separation between your ears.
           </p>
@@ -151,4 +141,4 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, onChange }) => {
   );
 };
 
-export default ModeSelector;
+export default memo(ModeSelector);

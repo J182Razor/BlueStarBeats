@@ -33,7 +33,7 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
 
   return (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 flex items-center justify-center p-4 pb-24 overflow-y-auto animate-fade-in"
       onClick={onClose}
     >
       <div 
