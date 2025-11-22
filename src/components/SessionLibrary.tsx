@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SessionProtocol, GoalType, SessionLength, getSessionsByGoal, getFreeSessions } from '../lib/sessionProtocols';
 import { premiumService } from '../lib/premiumService';
+import { SessionRecommendationEngine } from '../lib/sessionRecommendations';
+import { userPreferences } from '../lib/userPreferences';
+import { HapticFeedbackService } from '../lib/hapticFeedbackService';
 
 interface SessionLibraryProps {
   goal: GoalType | null;
@@ -11,11 +14,52 @@ interface SessionLibraryProps {
 const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, onClose }) => {
   const [selectedGoal, setSelectedGoal] = useState<GoalType | null>(goal);
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
+  const [showFavorites, setShowFavorites] = useState(false);
   const isPremium = premiumService.isPremium();
 
-  const allSessions = selectedGoal 
-    ? getSessionsByGoal(selectedGoal, isPremium)
-    : getFreeSessions();
+  // Get recommended sessions for the selected goal
+  const recommendedSessions = useMemo(() => {
+    if (selectedGoal) {
+      return SessionRecommendationEngine.recommendSessions(selectedGoal, 3);
+    }
+    return [];
+  }, [selectedGoal]);
+
+  // Get all sessions based on filter
+  const allSessions = useMemo(() => {
+    let sessions: SessionProtocol[] = [];
+    
+    if (showFavorites) {
+      const favorites = userPreferences.loadPreferences().favoriteSessions;
+      sessions = favorites
+        .map(id => getSessionsByGoal('sleep', isPremium)
+          .concat(getSessionsByGoal('anxiety', isPremium))
+          .concat(getSessionsByGoal('focus', isPremium))
+          .concat(getSessionsByGoal('meditation', isPremium))
+          .find(s => s.id === id))
+        .filter((s): s is SessionProtocol => s !== undefined);
+    } else if (selectedGoal) {
+      sessions = getSessionsByGoal(selectedGoal, isPremium);
+    } else {
+      sessions = getFreeSessions();
+    }
+    
+    return sessions;
+  }, [selectedGoal, showFavorites, isPremium]);
+
+  // Toggle favorite
+  const toggleFavorite = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    HapticFeedbackService.selectionChanged();
+    if (userPreferences.isFavorite(sessionId)) {
+      userPreferences.removeFavorite(sessionId);
+    } else {
+      userPreferences.addFavorite(sessionId);
+    }
+    // Force re-render
+    setHoveredSession(null);
+    setTimeout(() => setHoveredSession(sessionId), 10);
+  };
 
   const goals: { type: GoalType; emoji: string; title: string; color: string }[] = [
     { type: 'sleep', emoji: '😴', title: 'Sleep', color: 'from-indigo-600 to-purple-700' },
@@ -74,12 +118,15 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
         <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => setSelectedGoal(null)}
+              onClick={() => {
+                setSelectedGoal(null);
+                setShowFavorites(false);
+              }}
               className={`
                 px-6 py-3 rounded-full
                 font-semibold text-sm
                 transition-all duration-300
-                ${selectedGoal === null
+                ${selectedGoal === null && !showFavorites
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/50 scale-105'
                   : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 hover:text-white border border-gray-700/50'
                 }
@@ -87,16 +134,38 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
             >
               All Sessions
             </button>
+            <button
+              onClick={() => {
+                setShowFavorites(true);
+                setSelectedGoal(null);
+              }}
+              className={`
+                px-6 py-3 rounded-full
+                font-semibold text-sm
+                transition-all duration-300
+                flex items-center gap-2
+                ${showFavorites
+                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg scale-105'
+                  : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 hover:text-white border border-gray-700/50'
+                }
+              `}
+            >
+              <span className="text-lg">⭐</span>
+              Favorites
+            </button>
             {goals.map((g) => (
               <button
                 key={g.type}
-                onClick={() => setSelectedGoal(g.type)}
+                onClick={() => {
+                  setSelectedGoal(g.type);
+                  setShowFavorites(false);
+                }}
                 className={`
                   px-6 py-3 rounded-full
                   font-semibold text-sm
                   transition-all duration-300
                   flex items-center gap-2
-                  ${selectedGoal === g.type
+                  ${selectedGoal === g.type && !showFavorites
                     ? `bg-gradient-to-r ${g.color} text-white shadow-lg scale-105`
                     : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 hover:text-white border border-gray-700/50'
                   }
@@ -108,6 +177,66 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
             ))}
           </div>
         </div>
+
+        {/* Recommended Sessions Section */}
+        {recommendedSessions.length > 0 && selectedGoal && !showFavorites && (
+          <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.15s' }}>
+            <h3 className="text-xl font-bold text-silver-light mb-4 flex items-center gap-2">
+              <span className="text-2xl">✨</span>
+              Recommended for You
+            </h3>
+            <div className="space-y-3">
+              {recommendedSessions.map((session) => {
+                const stats = userPreferences.getSessionStats(session.id);
+                return (
+                  <div
+                    key={session.id}
+                    className="card-premium p-4 border-2 border-purple-500/30 hover:border-purple-400/50 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-white">{session.name}</h4>
+                          {userPreferences.isFavorite(session.id) && (
+                            <span className="text-yellow-400">⭐</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400">{session.description}</p>
+                        {stats.count > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Played {stats.count} time{stats.count !== 1 ? 's' : ''}
+                            {stats.averageRating && ` • ${stats.averageRating.toFixed(1)}⭐ avg`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => toggleFavorite(session.id, e)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            userPreferences.isFavorite(session.id)
+                              ? 'text-yellow-400 hover:text-yellow-300'
+                              : 'text-gray-400 hover:text-yellow-400'
+                          }`}
+                          aria-label={userPreferences.isFavorite(session.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => onSessionSelect(session, session.lengths[0])}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:scale-105 transition-transform"
+                        >
+                          Play
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Sessions List - Premium Card Design */}
         <div className="space-y-4">
@@ -157,6 +286,17 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
                       <h3 className="text-2xl font-bold text-white group-hover:text-gradient transition-colors duration-300">
                         {session.name}
                       </h3>
+                      {userPreferences.isFavorite(session.id) && (
+                        <button
+                          onClick={(e) => toggleFavorite(session.id, e)}
+                          className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                          aria-label="Remove from favorites"
+                        >
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                        </button>
+                      )}
                       {session.isPremium && (
                         <span className="
                           px-3 py-1
@@ -170,6 +310,31 @@ const SessionLibrary: React.FC<SessionLibraryProps> = ({ goal, onSessionSelect, 
                         </span>
                       )}
                     </div>
+                    {(() => {
+                      const stats = userPreferences.getSessionStats(session.id);
+                      return stats.count > 0 ? (
+                        <div className="flex items-center gap-4 mb-3 text-sm text-gray-400">
+                          <span>Played {stats.count} time{stats.count !== 1 ? 's' : ''}</span>
+                          {stats.averageRating && (
+                            <span className="flex items-center gap-1">
+                              <span className="text-yellow-400">⭐</span>
+                              {stats.averageRating.toFixed(1)} avg
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => toggleFavorite(session.id, e)}
+                          className={`mb-3 text-sm transition-colors ${
+                            userPreferences.isFavorite(session.id)
+                              ? 'text-yellow-400'
+                              : 'text-gray-400 hover:text-yellow-400'
+                          }`}
+                        >
+                          {userPreferences.isFavorite(session.id) ? '⭐ Favorited' : '+ Add to Favorites'}
+                        </button>
+                      );
+                    })()}
                     <p className="text-gray-300 mb-5 leading-relaxed text-base">
                       {session.description}
                     </p>
