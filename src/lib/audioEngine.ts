@@ -129,17 +129,11 @@ export class AudioEngine {
       if (iosContext && Capacitor.getPlatform() === 'ios') {
         this.audioContext = iosContext;
       } else {
-        // Create high-quality audio context
-        // Removed explicit sampleRate to allow system default (avoids initialization errors on some devices)
+        // Standard Web Audio API initialization
         const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
         this.audioContext = new AudioContext({
           latencyHint: 'playback' // Use 'playback' for better background audio support
         });
-      }
-
-      // Resume context immediately if suspended
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
       }
 
       // iOS-specific context management
@@ -157,6 +151,11 @@ export class AudioEngine {
             resumeContext();
           }
         }) as EventListener);
+      }
+
+      // Resume context immediately if suspended
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
       }
 
       // Set up event listeners for audio context state changes
