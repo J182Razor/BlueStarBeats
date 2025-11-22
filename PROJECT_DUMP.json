@@ -1,0 +1,1056 @@
+{
+  "project": {
+    "name": "Blue Star Beats",
+    "description": "Precision Brainwave Entrainment application using binaural beats and isochronic tones",
+    "version": "0.0.0",
+    "type": "module",
+    "repository": "https://github.com/J182Razor/BlueStarBeats.git",
+    "license": "Private",
+    "platforms": ["Web", "iOS (Capacitor)"]
+  },
+  "technologyStack": {
+    "framework": "React 18.2.0 with TypeScript 5.2.2",
+    "buildTool": "Vite 5.2.0",
+    "styling": "Tailwind CSS 3.4.3",
+    "audioEngine": "Web Audio API (native browser API)",
+    "mobileFramework": "Capacitor 7.4.4 (iOS support)",
+    "stateManagement": "React Hooks (useState, useEffect, useCallback, useMemo, useRef)",
+    "language": "TypeScript (strict mode enabled)",
+    "bundler": "Vite with ES modules"
+  },
+  "projectStructure": {
+    "rootFiles": [
+      "package.json",
+      "tsconfig.json",
+      "vite.config.ts",
+      "capacitor.config.ts",
+      "tailwind.config.js",
+      "postcss.config.js",
+      "index.html",
+      "README.md"
+    ],
+    "directories": {
+      "src/": {
+        "description": "Main source code",
+        "subdirectories": {
+          "components/": "13 React UI components",
+          "lib/": "10 core business logic and utility files",
+          "styles/": "CSS design system and custom styles"
+        }
+      },
+      "ios/": {
+        "description": "iOS native app configuration (Capacitor)",
+        "keyFiles": [
+          "App/App/AppDelegate.swift",
+          "App/App/Info.plist",
+          "App/Podfile"
+        ]
+      },
+      "docs/": {
+        "description": "Documentation files",
+        "files": [
+          "IOS_SETUP.md",
+          "TROUBLESHOOTING.md",
+          "USAGE.md",
+          "BACKGROUND_AUDIO.md",
+          "UI_UX_UPGRADE_SUMMARY.md"
+        ]
+      },
+      "scripts/": {
+        "description": "Build and utility scripts",
+        "files": [
+          "build-ios.sh",
+          "clean-and-rebuild.sh",
+          "fix-pods-script.sh",
+          "fix-ios-audio.sh",
+          "diagnose-build-error.sh"
+        ]
+      },
+      "public/": "Static assets (logos, images)",
+      "dist/": "Production build output"
+    }
+  },
+  "components": {
+    "App.tsx": {
+      "purpose": "Main application component - handles routing, state, and audio engine integration",
+      "keyFeatures": [
+        "Goal selection (onboarding integrated)",
+        "Session management",
+        "Audio playback control",
+        "Pro mode toggle",
+        "Premium modal integration",
+        "Device controls integration",
+        "Frequency ramping for sessions",
+        "Session tracking and completion",
+        "Rating modal triggers",
+        "History navigation"
+      ],
+      "stateManagement": {
+        "audioEngine": "Single instance created with useState(() => new AudioEngine())",
+        "selectedGoal": "GoalType | null",
+        "currentSession": "SessionProtocol | null",
+        "sessionLength": "SessionLength | null",
+        "isPlaying": "boolean",
+        "showSessionLibrary": "boolean",
+        "showPremiumModal": "boolean",
+        "showProMode": "boolean",
+        "showOnboarding": "boolean",
+        "showSessionHistory": "boolean",
+        "showRatingModal": "boolean",
+        "settings": "AudioSettings object",
+        "sessionStartTimeRef": "useRef<number | null> for tracking session duration"
+      },
+      "optimizations": [
+        "React.memo wrapper",
+        "useCallback for event handlers",
+        "useMemo for expensive computations",
+        "Consolidated onboarding into main view"
+      ],
+      "linesOfCode": "~680"
+    },
+    "AudioControlPanel.tsx": {
+      "purpose": "Play/pause and volume controls",
+      "features": [
+        "Play/pause button",
+        "Volume slider",
+        "Visual feedback"
+      ],
+      "optimizations": [
+        "React.memo wrapper",
+        "Mobile-responsive padding"
+      ]
+    },
+    "AudioPresetSelector.tsx": {
+      "purpose": "Audio preset selection component for Pro Mode",
+      "features": [
+        "8 pre-configured audio presets",
+        "Search functionality",
+        "Category filtering (sleep, focus, meditation, anxiety, creativity, learning)",
+        "Brainwave filtering (delta, theta, alpha, beta, gamma)",
+        "Intensity filtering (gentle, moderate, intense)",
+        "Active preset indicator",
+        "Color-coded intensity and brainwave types",
+        "One-click preset application"
+      ],
+      "linesOfCode": "~200"
+    },
+    "FrequencyControl.tsx": {
+      "purpose": "Carrier and beat frequency sliders",
+      "features": [
+        "Logarithmic scaling for intuitive control",
+        "Debounced updates for performance",
+        "Real-time frequency display"
+      ],
+      "optimizations": [
+        "React.memo wrapper",
+        "useCallback for handlers",
+        "useMemo for computed values",
+        "Debouncing to prevent rapid updates"
+      ]
+    },
+    "IOSAudioTest.tsx": {
+      "purpose": "iOS audio connectivity testing component",
+      "features": [
+        "Audio status display",
+        "Context state monitoring",
+        "Retry functionality"
+      ]
+    },
+    "ModeSelector.tsx": {
+      "purpose": "Switch between binaural and isochronic modes",
+      "optimizations": [
+        "React.memo wrapper"
+      ]
+    },
+    "Oscilloscope.tsx": {
+      "purpose": "Real-time waveform visualization",
+      "features": [
+        "Canvas-based rendering",
+        "High-DPI screen support",
+        "Static preview when not playing",
+        "Animated grid and gradients",
+        "Live waveform display"
+      ],
+      "optimizations": [
+        "React.memo wrapper",
+        "Animation only runs when isPlaying is true",
+        "Proper canvas scaling with devicePixelRatio",
+        "requestAnimationFrame for smooth updates",
+        "Optimized rendering (removed double-stroke)"
+      ],
+      "linesOfCode": "~260"
+    },
+    "PremiumModal.tsx": {
+      "purpose": "Premium upgrade interface",
+      "features": [
+        "Three pricing tiers (monthly, annual, lifetime)",
+        "Feature list",
+        "Animated UI elements",
+        "Popular tier highlighting"
+      ],
+      "linesOfCode": "~240"
+    },
+    "SessionHistory.tsx": {
+      "purpose": "Session history view with statistics and filtering",
+      "features": [
+        "Statistics dashboard (total sessions, completed, total time, avg rating)",
+        "Filtering (all, completed, incomplete)",
+        "Sorting (date, rating, duration)",
+        "Session details with notes viewer",
+        "Click to replay sessions",
+        "Visual completion indicators",
+        "Notes expansion modal"
+      ],
+      "linesOfCode": "~300"
+    },
+    "SessionLibrary.tsx": {
+      "purpose": "Browse and select session protocols",
+      "features": [
+        "Goal-based filtering",
+        "Premium session indicators",
+        "Session length selection",
+        "Modal interface",
+        "Smart recommendations section",
+        "Favorites functionality",
+        "Session statistics display",
+        "Recently played tracking"
+      ],
+      "linesOfCode": "~400"
+    },
+    "SessionRating.tsx": {
+      "purpose": "Session rating and feedback modal",
+      "features": [
+        "5-star rating system with hover effects",
+        "Optional notes/feedback (500 char limit)",
+        "Rating labels (Poor to Excellent)",
+        "Character counter",
+        "Haptic feedback integration"
+      ],
+      "linesOfCode": "~150"
+    },
+    "SessionTimer.tsx": {
+      "purpose": "Countdown timer for active sessions",
+      "features": [
+        "Progress bar",
+        "Elapsed/total time display",
+        "Auto-complete callback"
+      ],
+      "optimizations": [
+        "React.memo wrapper",
+        "setInterval cleanup on unmount"
+      ]
+    },
+    "WaveformSelector.tsx": {
+      "purpose": "Select waveform type (sine, square, triangle, sawtooth)",
+      "optimizations": [
+        "React.memo wrapper"
+      ]
+    },
+    "ErrorBoundary.tsx": {
+      "purpose": "React error boundary for graceful error handling",
+      "features": [
+        "Error display UI",
+        "Error details in collapsed section (dev mode only)",
+        "Refresh button",
+        "Sentry integration support",
+        "Error ID tracking"
+      ]
+    }
+  },
+  "libraries": {
+    "audioEngine.ts": {
+      "purpose": "Web Audio API engine for generating binaural beats and isochronic tones",
+      "class": "AudioEngine",
+      "keyMethods": {
+        "initialize()": "Creates AudioContext and sets up audio nodes with iOS support",
+        "start()": "Starts audio generation based on current mode",
+        "stop()": "Stops audio and cleans up nodes",
+        "updateSettings()": "Updates audio parameters in real-time",
+        "setupBinauralBeats()": "Configures stereo oscillators for binaural beats",
+        "setupIsochronicTones()": "Configures LFO-modulated gain for isochronic tones",
+        "getAnalyserData()": "Returns time-domain data for visualization",
+        "getFrequencyData()": "Returns frequency-domain data",
+        "cleanup()": "Disconnects and stops all audio nodes",
+        "scheduleFrequencyChange()": "Web Audio API scheduling for frequency changes",
+        "scheduleBeatFrequencyChange()": "Web Audio API scheduling for beat frequency",
+        "clearSchedule()": "Clears all scheduled events"
+      },
+      "audioNodes": {
+        "masterGain": "Main volume control",
+        "leftOscillator/rightOscillator": "Stereo oscillators for binaural beats",
+        "isoOscillator": "Main oscillator for isochronic tones",
+        "isoLFO": "Low-frequency oscillator for isochronic modulation",
+        "compressor": "Dynamics compressor to prevent clipping",
+        "lowPassFilter": "Anti-aliasing filter (18kHz)",
+        "highPassFilter": "DC and rumble removal (20Hz)",
+        "analyser": "FFT analyser for visualization"
+      },
+      "features": {
+        "binauralBeats": {
+          "implementation": "Two oscillators with frequency difference",
+          "stereoPanning": "StereoPannerNode with PannerNode fallback",
+          "gainMultipliers": "Waveform-specific gain to prevent distortion"
+        },
+        "isochronicTones": {
+          "implementation": "LFO-modulated gain using requestAnimationFrame",
+          "modulationRange": "Base gain (0.5) to min gain (0.15)",
+          "updateMethod": "requestAnimationFrame loop calculating LFO from AudioContext.currentTime",
+          "cleanup": "Proper cancellation of animation frame loop"
+        },
+        "iosSupport": {
+          "iosAudioManager": "Integration with IOSAudioManager",
+          "interruptionHandling": "Phone calls, Siri, background/foreground",
+          "statePreservation": "Maintains state during interruptions"
+        },
+        "scheduling": {
+          "webAudioScheduling": "Precise timing using Web Audio API",
+          "scheduledEvents": "Map-based event tracking",
+          "frequencyRamping": "Smooth frequency transitions"
+        }
+      },
+      "optimizations": [
+        "No hardcoded sampleRate (allows system default)",
+        "Fallback to PannerNode if StereoPannerNode unavailable",
+        "Smooth frequency transitions (setTargetAtTime)",
+        "Waveform-specific gain multipliers to prevent clipping",
+        "Audio context state monitoring and auto-resume",
+        "Proper cleanup of animation loops"
+      ],
+      "linesOfCode": "~665"
+    },
+    "audioPresets.ts": {
+      "purpose": "Pre-configured audio presets for quick setup",
+      "exports": {
+        "AUDIO_PRESETS": "Array of 8 AudioPreset objects",
+        "getPresetsByBrainwave()": "Filter presets by brainwave type",
+        "getPresetsByCategory()": "Filter presets by category",
+        "getPresetsByIntensity()": "Filter presets by intensity",
+        "getPresetById()": "Get preset by ID"
+      },
+      "presets": [
+        {
+          "id": "deep-focus",
+          "name": "Deep Focus",
+          "targetBrainwave": "beta",
+          "intensity": "moderate",
+          "category": "focus"
+        },
+        {
+          "id": "deep-sleep",
+          "name": "Deep Sleep",
+          "targetBrainwave": "delta",
+          "intensity": "gentle",
+          "category": "sleep"
+        },
+        {
+          "id": "meditation-alpha",
+          "name": "Alpha Meditation",
+          "targetBrainwave": "alpha",
+          "intensity": "gentle",
+          "category": "meditation"
+        },
+        {
+          "id": "meditation-theta",
+          "name": "Theta Meditation",
+          "targetBrainwave": "theta",
+          "intensity": "moderate",
+          "category": "meditation"
+        },
+        {
+          "id": "anxiety-relief",
+          "name": "Anxiety Relief",
+          "targetBrainwave": "alpha",
+          "intensity": "gentle",
+          "category": "anxiety"
+        },
+        {
+          "id": "creative-flow",
+          "name": "Creative Flow",
+          "targetBrainwave": "theta",
+          "intensity": "moderate",
+          "category": "creativity"
+        },
+        {
+          "id": "peak-performance",
+          "name": "Peak Performance",
+          "targetBrainwave": "gamma",
+          "intensity": "intense",
+          "category": "learning"
+        },
+        {
+          "id": "quick-relax",
+          "name": "Quick Relax",
+          "targetBrainwave": "alpha",
+          "intensity": "gentle",
+          "category": "anxiety",
+          "mode": "isochronic"
+        }
+      ]
+    },
+    "deviceControls.ts": {
+      "purpose": "Native device media controls integration",
+      "class": "DeviceControls (Singleton)",
+      "features": {
+        "mediaSession": "Media Session API for lock screen controls",
+        "iosControls": "iOS-specific control handlers",
+        "updateNowPlaying()": "Updates lock screen metadata"
+      }
+    },
+    "hapticFeedbackService.ts": {
+      "purpose": "Haptic feedback for mobile interactions",
+      "class": "HapticFeedbackService",
+      "methods": {
+        "selectionChanged()": "Light haptic for selection changes",
+        "impact(style)": "Haptic impact (heavy, medium, light)",
+        "notification(type)": "Haptic notification (success, warning, error)"
+      },
+      "platformSupport": "iOS via Capacitor Haptics plugin"
+    },
+    "iosAudioManager.ts": {
+      "purpose": "iOS-specific audio session management",
+      "class": "IOSAudioManager (Singleton)",
+      "features": {
+        "audioSessionConfiguration": "Proper iOS audio session setup",
+        "interruptionHandling": "Phone calls, Siri, background/foreground",
+        "backgroundAudio": "Background audio support",
+        "contextManagement": "Web Audio API context for iOS"
+      },
+      "methods": {
+        "initializeIOSAudio()": "Configure iOS audio session",
+        "getAudioContext()": "Get iOS audio context",
+        "isConfigured()": "Check if iOS audio is configured"
+      }
+    },
+    "premiumService.ts": {
+      "purpose": "Premium subscription management",
+      "class": "PremiumServiceManager",
+      "features": {
+        "tiers": ["free", "monthly", "annual", "lifetime"],
+        "localStorage": "Persists tier in localStorage",
+        "hasAccess()": "Checks feature access based on tier",
+        "getPricingInfo()": "Returns pricing details"
+      },
+      "pricing": {
+        "monthly": 14.99,
+        "annual": 69.99,
+        "lifetime": 399.99
+      }
+    },
+    "sessionProtocols.ts": {
+      "purpose": "Defines all available session protocols",
+      "exports": {
+        "SESSION_PROTOCOLS": "Array of 13 SessionProtocol objects",
+        "getSessionsByGoal()": "Filter sessions by goal type",
+        "getSessionById()": "Get session by ID",
+        "getFreeSessions()": "Get all free (non-premium) sessions"
+      },
+      "sessionCount": {
+        "total": 13,
+        "free": 7,
+        "premium": 6
+      },
+      "sessionTypes": {
+        "sleep": 3,
+        "anxiety": 4,
+        "focus": 3,
+        "meditation": 3
+      },
+      "features": {
+        "frequencyRamp": "Optional frequency ramping for gradual transitions",
+        "multipleLengths": "Sessions can have multiple duration options",
+        "premiumFlag": "Marks premium-only sessions"
+      }
+    },
+    "sessionRecommendations.ts": {
+      "purpose": "Smart session recommendation engine",
+      "class": "SessionRecommendationEngine",
+      "features": {
+        "recommendSessions()": "Get recommended sessions based on goal and history",
+        "getSimilarSessions()": "Find sessions similar to a given session",
+        "getTrendingSessions()": "Get most played sessions recently"
+      },
+      "scoringAlgorithm": {
+        "baseScore": 10,
+        "favoriteBoost": 20,
+        "recentlyPlayedBoost": "15 - index",
+        "completionCountBoost": "count * 2",
+        "ratingBoost": "rating * 3",
+        "recencyBoost": 5,
+        "newSessionBoost": 3,
+        "premiumBoost": 2,
+        "frequencyRampBoost": 3
+      }
+    },
+    "types.ts": {
+      "purpose": "Enhanced type definitions for the application",
+      "exports": {
+        "BrainwaveType": "delta | theta | alpha | beta | gamma",
+        "SessionCategory": "sleep | focus | meditation | anxiety | creativity | learning",
+        "WaveformType": "sine | square | triangle | sawtooth",
+        "AudioMode": "binaural | isochronic",
+        "GoalType": "sleep | anxiety | focus | meditation",
+        "SessionLength": "5 | 10 | 15 | 20 | 30 | 45 | 60 | 90 | 120",
+        "Intensity": "gentle | moderate | intense",
+        "AudioSettings": "Interface for audio configuration",
+        "AudioPreset": "Interface for audio presets",
+        "SessionProtocol": "Interface for session protocols",
+        "SessionHistoryEntry": "Interface for session history",
+        "UserPreferences": "Interface for user preferences"
+      }
+    },
+    "userPreferences.ts": {
+      "purpose": "User preferences and session history management",
+      "class": "UserPreferencesManager (Singleton)",
+      "features": {
+        "favorites": "Add/remove favorite sessions",
+        "recentlyPlayed": "Track recently played sessions (max 20)",
+        "sessionHistory": "Store session history (max 100 entries)",
+        "preferences": "User preferences (default volume, waveform, mode, etc.)",
+        "statistics": "Session statistics (play count, average rating)"
+      },
+      "storage": {
+        "preferencesKey": "bluestarbeats_user_preferences",
+        "historyKey": "bluestarbeats_session_history",
+        "maxHistoryEntries": 100,
+        "maxRecentSessions": 20
+      },
+      "methods": {
+        "loadPreferences()": "Load user preferences from localStorage",
+        "savePreferences()": "Save user preferences to localStorage",
+        "addFavorite()": "Add session to favorites",
+        "removeFavorite()": "Remove session from favorites",
+        "isFavorite()": "Check if session is favorite",
+        "addToRecentlyPlayed()": "Add session to recently played",
+        "addSessionHistory()": "Add entry to session history",
+        "getSessionHistory()": "Get all session history entries",
+        "getSessionStats()": "Get statistics for a session"
+      }
+    }
+  },
+  "features": {
+    "core": [
+      "Binaural beats generation",
+      "Isochronic tones generation",
+      "Multiple waveform types (sine, square, triangle, sawtooth)",
+      "Real-time frequency control",
+      "Session protocols with frequency ramping",
+      "Waveform visualization (oscilloscope)",
+      "Session timer with progress",
+      "Volume control"
+    ],
+    "premium": [
+      "50+ session protocols (currently 13 implemented)",
+      "Advanced protocols (Gamma waves)",
+      "Custom frequency ranges",
+      "Offline mode (not implemented)",
+      "Music mixing (not implemented)"
+    ],
+    "ui": [
+      "Goal-based onboarding",
+      "Session library browser",
+      "Pro mode for advanced controls",
+      "Premium upgrade modal",
+      "Responsive mobile design",
+      "Dark theme with gradients",
+      "Glass morphism effects",
+      "Animated transitions",
+      "Audio presets selector",
+      "Session rating system",
+      "Session history view",
+      "Favorites functionality",
+      "Smart recommendations"
+    ],
+    "ios": [
+      "iOS audio session management",
+      "Background audio support",
+      "Interruption handling",
+      "Haptic feedback",
+      "Lock screen controls",
+      "Native app integration"
+    ],
+    "tracking": [
+      "Session completion tracking",
+      "Session duration tracking",
+      "Rating system",
+      "Notes/feedback",
+      "Recently played",
+      "Favorites",
+      "Session statistics"
+    ]
+  },
+  "dependencies": {
+    "production": {
+      "@capacitor/app": "^7.0.1",
+      "@capacitor/cli": "^7.4.4",
+      "@capacitor/core": "^7.4.4",
+      "@capacitor/haptics": "^7.0.1",
+      "@capacitor/ios": "^7.4.4",
+      "@capacitor/splash-screen": "^7.0.3",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
+    },
+    "development": {
+      "@types/react": "^18.2.66",
+      "@types/react-dom": "^18.2.22",
+      "@typescript-eslint/eslint-plugin": "^7.2.0",
+      "@typescript-eslint/parser": "^7.2.0",
+      "@vitejs/plugin-react": "^4.2.1",
+      "autoprefixer": "^10.4.19",
+      "eslint": "^8.57.0",
+      "eslint-plugin-react-hooks": "^4.6.0",
+      "eslint-plugin-react-refresh": "^0.4.6",
+      "postcss": "^8.4.38",
+      "tailwindcss": "^3.4.3",
+      "typescript": "^5.2.2",
+      "vite": "^5.2.0"
+    }
+  },
+  "buildConfiguration": {
+    "vite": {
+      "base": "./",
+      "server": {
+        "host": "0.0.0.0",
+        "port": 5173
+      },
+      "build": {
+        "outDir": "dist",
+        "assetsDir": "assets"
+      }
+    },
+    "typescript": {
+      "target": "ES2020",
+      "strict": true,
+      "jsx": "react-jsx",
+      "moduleResolution": "bundler"
+    },
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "lint": "eslint . --ext ts,tsx",
+      "preview": "vite preview",
+      "ios:build": "npm run build && npx cap sync ios",
+      "ios:open": "npx cap open ios",
+      "ios:sync": "npx cap sync ios",
+      "ios:run": "npm run ios:build && npx cap open ios"
+    }
+  },
+  "iosConfiguration": {
+    "appId": "com.bluestarbeats.app",
+    "appName": "Blue Star Beats",
+    "webDir": "dist",
+    "bundledWebRuntime": false,
+    "backgroundModes": ["audio", "processing"],
+    "infoPlist": {
+      "UIBackgroundModes": ["audio", "processing"],
+      "NSMicrophoneUsageDescription": "Blue Star Beats needs microphone access for noise cancellation features",
+      "UIRequiresFullScreen": false,
+      "UISupportedInterfaceOrientations": ["Portrait", "LandscapeLeft", "LandscapeRight"]
+    },
+    "capabilities": {
+      "backgroundAudio": true,
+      "hapticFeedback": true,
+      "mediaControls": true
+    }
+  },
+  "performanceOptimizations": {
+    "react": [
+      "React.memo on all major components",
+      "useCallback for event handlers",
+      "useMemo for expensive computations",
+      "Single AudioEngine instance (not recreated on re-render)"
+    ],
+    "audio": [
+      "Animation only when playing (Oscilloscope)",
+      "Debounced frequency updates",
+      "Smooth audio parameter transitions",
+      "Proper cleanup of audio nodes",
+      "Web Audio API scheduling instead of setInterval"
+    ],
+    "rendering": [
+      "Canvas optimization with devicePixelRatio",
+      "requestAnimationFrame for animations",
+      "Conditional rendering based on state",
+      "Optimized canvas rendering (removed double-stroke)"
+    ]
+  },
+  "mobileSupport": {
+    "framework": "Capacitor 7.4.4",
+    "platforms": ["iOS"],
+    "features": {
+      "backgroundAudio": "Supported via Media Session API and Info.plist",
+      "lockScreenControls": "Implemented via deviceControls.ts",
+      "splashScreen": "Configured in capacitor.config.ts",
+      "hapticFeedback": "Implemented via hapticFeedbackService.ts",
+      "iosAudioManagement": "Implemented via iosAudioManager.ts"
+    }
+  },
+  "recentChanges": {
+    "latestCommit": "d14580b",
+    "changes": [
+      "Integrated audio presets into Pro Mode UI",
+      "Added session rating system with notes",
+      "Created comprehensive session history view",
+      "Implemented session tracking and completion detection",
+      "Added favorites functionality",
+      "Enhanced SessionLibrary with recommendations",
+      "Fixed iOS audio connectivity issues",
+      "Implemented Web Audio API scheduling for frequency ramps",
+      "Added haptic feedback throughout the app",
+      "Enhanced ErrorBoundary with better error handling",
+      "Optimized Oscilloscope rendering",
+      "Created user preferences management system",
+      "Implemented smart session recommendation engine"
+    ]
+  },
+  "knownIssues": {
+    "critical": [],
+    "high": [
+      "Premium service has no server-side validation (localStorage only)",
+      "No payment processing integration",
+      "SessionTimer could drift if browser tab is inactive (setInterval limitation)"
+    ],
+    "medium": [
+      "No Android support implemented",
+      "Offline mode not implemented",
+      "Music mixing feature not implemented",
+      "No unit tests",
+      "No error monitoring service integration (Sentry placeholder)"
+    ],
+    "low": [
+      "No virtualization for long session lists",
+      "No dark/light theme toggle",
+      "Limited accessibility features",
+      "No analytics integration"
+    ]
+  },
+  "enhancementOpportunities": {
+    "features": [
+      "Implement Android support",
+      "Add music mixing capability",
+      "Implement offline mode with service worker",
+      "Add session export/import",
+      "Add social sharing features",
+      "Add session presets/custom sessions saving",
+      "Add user profiles and cloud sync",
+      "Implement server-side premium validation",
+      "Add payment processing integration",
+      "Add analytics and usage tracking",
+      "Add push notifications for session reminders",
+      "Add session scheduling/calendar integration"
+    ],
+    "codeQuality": [
+      "Add comprehensive unit tests",
+      "Add integration tests",
+      "Add E2E tests",
+      "Improve TypeScript type coverage",
+      "Add JSDoc comments",
+      "Consolidate duplicate code",
+      "Extract magic numbers to constants",
+      "Add logging/monitoring service",
+      "Implement error tracking (Sentry)"
+    ],
+    "ui": [
+      "Add dark/light theme toggle",
+      "Improve accessibility (ARIA labels, keyboard navigation)",
+      "Add more animation options",
+      "Improve loading states",
+      "Add skeleton loaders",
+      "Add toast notifications",
+      "Improve error messages",
+      "Add onboarding tutorial"
+    ],
+    "audio": [
+      "Add audio presets saving",
+      "Add frequency spectrum visualization",
+      "Add audio recording/playback",
+      "Add audio effects (reverb, delay)",
+      "Improve audio quality settings",
+      "Add audio export functionality",
+      "Add binaural beat mixing",
+      "Add session fade in/out"
+    ],
+    "performance": [
+      "Implement virtual scrolling for session lists",
+      "Add service worker for offline support",
+      "Optimize bundle size",
+      "Add code splitting",
+      "Implement lazy loading for components",
+      "Add image optimization"
+    ]
+  },
+  "testing": {
+    "current": "No tests implemented",
+    "recommended": [
+      "Unit tests for audioEngine.ts",
+      "Unit tests for sessionProtocols.ts",
+      "Unit tests for premiumService.ts",
+      "Unit tests for userPreferences.ts",
+      "Unit tests for sessionRecommendations.ts",
+      "Component tests for React components",
+      "Integration tests for audio playback",
+      "E2E tests for user flows",
+      "Performance tests for audio generation",
+      "iOS-specific tests"
+    ]
+  },
+  "documentation": {
+    "status": "Good",
+    "files": [
+      "README.md - Main project documentation",
+      "docs/IOS_SETUP.md - iOS setup guide",
+      "docs/TROUBLESHOOTING.md - Common issues and solutions",
+      "docs/USAGE.md - Usage instructions",
+      "docs/BACKGROUND_AUDIO.md - Background audio implementation",
+      "docs/UI_UX_UPGRADE_SUMMARY.md - UI/UX improvements"
+    ],
+    "needsImprovement": [
+      "API documentation (JSDoc)",
+      "Component prop documentation",
+      "Audio engine algorithm documentation",
+      "Architecture decision records"
+    ]
+  },
+  "security": {
+    "current": [
+      "No authentication",
+      "No authorization",
+      "Premium status stored in localStorage (can be manipulated)",
+      "No input validation on frequency inputs",
+      "No rate limiting"
+    ],
+    "recommendations": [
+      "Implement server-side premium validation",
+      "Add input validation and sanitization",
+      "Add rate limiting for API calls",
+      "Implement proper authentication if needed",
+      "Add CSP headers",
+      "Sanitize user inputs",
+      "Implement secure payment processing"
+    ]
+  },
+  "accessibility": {
+    "current": "Basic",
+    "issues": [
+      "Missing ARIA labels on some buttons",
+      "No keyboard navigation support",
+      "No screen reader optimization",
+      "Color contrast may not meet WCAG standards"
+    ],
+    "recommendations": [
+      "Add ARIA labels to all interactive elements",
+      "Implement keyboard navigation",
+      "Add focus indicators",
+      "Improve color contrast",
+      "Add skip links",
+      "Test with screen readers",
+      "Add keyboard shortcuts"
+    ]
+  },
+  "metrics": {
+    "linesOfCode": 4340,
+    "totalFiles": 25,
+    "components": 13,
+    "libraries": 10,
+    "sessionProtocols": 13,
+    "audioPresets": 8,
+    "testCoverage": "0%",
+    "typeScriptCoverage": "~95%",
+    "buildSize": "Unknown (needs analysis)"
+  },
+  "fileStructure": {
+    "src/components": [
+      "App.tsx",
+      "AudioControlPanel.tsx",
+      "AudioPresetSelector.tsx",
+      "ErrorBoundary.tsx",
+      "FrequencyControl.tsx",
+      "IOSAudioTest.tsx",
+      "ModeSelector.tsx",
+      "Oscilloscope.tsx",
+      "PremiumModal.tsx",
+      "SessionHistory.tsx",
+      "SessionLibrary.tsx",
+      "SessionRating.tsx",
+      "SessionTimer.tsx",
+      "WaveformSelector.tsx"
+    ],
+    "src/lib": [
+      "audioEngine.ts",
+      "audioPresets.ts",
+      "deviceControls.ts",
+      "hapticFeedbackService.ts",
+      "iosAudioManager.ts",
+      "premiumService.ts",
+      "sessionProtocols.ts",
+      "sessionRecommendations.ts",
+      "types.ts",
+      "userPreferences.ts"
+    ],
+    "src/styles": [
+      "design-system.css"
+    ],
+    "scripts": [
+      "build-ios.sh",
+      "check-simulators.sh",
+      "clean-and-rebuild.sh",
+      "clean-build.sh",
+      "commit-changes.sh",
+      "diagnose-build-error.sh",
+      "fix-capacitor-error.sh",
+      "fix-capacitor-not-found.sh",
+      "fix-capacitor-xcode.sh",
+      "fix-ios-audio.sh",
+      "fix-phase-script-error.sh",
+      "fix-pods-script.sh",
+      "fix-sandbox-permissions.sh",
+      "git-push.sh",
+      "refactor.sh",
+      "run-build.sh",
+      "setup-embed-script.sh",
+      "setup-injection.sh",
+      "start-injection.sh"
+    ]
+  },
+  "keyAlgorithms": {
+    "audioGeneration": {
+      "binauralBeats": {
+        "description": "Two oscillators with frequency difference create perceived beat",
+        "leftFrequency": "carrierFrequency",
+        "rightFrequency": "carrierFrequency + beatFrequency",
+        "stereoPanning": "StereoPannerNode with PannerNode fallback"
+      },
+      "isochronicTones": {
+        "description": "LFO modulates gain to create pulsing effect",
+        "modulationFormula": "gain = minGain + (normalizedLFO * modulationRange)",
+        "lfoCalculation": "Math.sin(time * beatFrequency * 2 * Math.PI)",
+        "updateMethod": "requestAnimationFrame loop"
+      },
+      "frequencyRamping": {
+        "description": "Gradual frequency transition over time",
+        "method": "Web Audio API scheduling (setValueAtTime)",
+        "precision": "Sample-accurate timing",
+        "replaces": "setInterval (drift-prone)"
+      }
+    },
+    "recommendations": {
+      "scoring": {
+        "baseScore": 10,
+        "factors": [
+          "Favorites (+20)",
+          "Recently played (15 - index)",
+          "Completion count (count * 2)",
+          "User rating (rating * 3)",
+          "Recency (< 7 days: +5)",
+          "New session (+3)",
+          "Premium session (+2)",
+          "Frequency ramp (+3)"
+        ]
+      },
+      "similarity": {
+        "factors": [
+          "Same goal (+30)",
+          "Similar beat frequency within 2Hz (+20)",
+          "Same mode (+15)",
+          "Same waveform (+10)",
+          "Both have frequency ramp (+10)",
+          "Similar carrier frequency within 50Hz (+15)"
+        ]
+      }
+    }
+  },
+  "dataFlow": {
+    "sessionFlow": {
+      "1": "User selects goal → SessionLibrary shows filtered sessions",
+      "2": "User selects session → App.tsx updates settings",
+      "3": "User clicks play → AudioEngine initializes and starts",
+      "4": "Session plays → Timer counts down, waveform visualizes",
+      "5": "Session completes → History entry created, rating modal shown",
+      "6": "User rates → Rating and notes saved to history"
+    },
+    "presetFlow": {
+      "1": "User opens Pro Mode → AudioPresetSelector displayed",
+      "2": "User filters/searches presets → Filtered list shown",
+      "3": "User selects preset → Settings updated, audio restarted if playing"
+    },
+    "historyFlow": {
+      "1": "User clicks History → SessionHistory modal opens",
+      "2": "User filters/sorts → Filtered list displayed",
+      "3": "User clicks session → Session selected and modal closes"
+    }
+  },
+  "stateManagement": {
+    "localState": "React useState hooks",
+    "persistentState": "localStorage via userPreferences and premiumService",
+    "audioState": "AudioEngine class instance",
+    "noGlobalState": "No Redux or Context API (intentional simplicity)"
+  },
+  "styling": {
+    "framework": "Tailwind CSS 3.4.3",
+    "customStyles": {
+      "index.css": "Global styles, safe-area-inset, starry night background",
+      "design-system.css": "Design tokens, utility classes, component styles"
+    },
+    "designSystem": {
+      "colors": {
+        "primary": "Gradient-based (purple, blue, gold)",
+        "background": "Dark theme (#1c1c3c, gradients)",
+        "glass": "Glass morphism effects"
+      },
+      "responsive": {
+        "mobileFirst": true,
+        "breakpoints": "sm, md, lg",
+        "safeAreaInsets": "Uses CSS safe-area-inset for notched devices"
+      },
+      "animations": [
+        "fade-in",
+        "slide-up",
+        "scale-in",
+        "pulse",
+        "shimmer effects"
+      ]
+    }
+  },
+  "deployment": {
+    "web": {
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist",
+      "staticHosting": "Can be deployed to any static host"
+    },
+    "ios": {
+      "buildCommand": "npm run ios:build",
+      "workspace": "ios/App/BlueStarBeats.xcworkspace",
+      "requirements": [
+        "macOS with Xcode",
+        "CocoaPods installed",
+        "Apple Developer account (for device testing)"
+      ]
+    }
+  },
+  "triagePriorities": {
+    "critical": [
+      "Implement server-side premium validation",
+      "Add payment processing integration",
+      "Add comprehensive error handling",
+      "Implement input validation"
+    ],
+    "high": [
+      "Add unit tests",
+      "Implement Android support",
+      "Add offline mode",
+      "Improve accessibility"
+    ],
+    "medium": [
+      "Add analytics",
+      "Implement music mixing",
+      "Add session export/import",
+      "Improve documentation"
+    ],
+    "low": [
+      "Add theme toggle",
+      "Add keyboard shortcuts",
+      "Add session scheduling",
+      "Add social sharing"
+    ]
+  }
+}
+
