@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { IOSAudioManager } from './iosAudioManager';
+
 export type WaveformType = 'sine' | 'square' | 'triangle' | 'sawtooth';
 export type AudioMode = 'binaural' | 'isochronic';
 
@@ -7,6 +10,12 @@ export interface AudioSettings {
   waveform: WaveformType;
   mode: AudioMode;
   volume: number;
+}
+
+interface ScheduledEvent {
+  type: 'frequency' | 'gain' | 'volume';
+  value: number;
+  time: number;
 }
 
 export class AudioEngine {
@@ -21,6 +30,7 @@ export class AudioEngine {
   private highPassFilter: BiquadFilterNode | null = null;
   private analyser: AnalyserNode | null = null;
   private isPlaying = false;
+  private wasPlayingBeforeInterruption = false;
   private settings: AudioSettings = {
     carrierFrequency: 440,
     beatFrequency: 10,
@@ -34,8 +44,77 @@ export class AudioEngine {
   private isoGain: GainNode | null = null;
   private isoLFO: OscillatorNode | null = null;
   private isoLFOGain: GainNode | null = null;
+  private isoAnimationFrameId: number | null = null;
+
+  // iOS Audio Manager
+  private iosAudioManager: IOSAudioManager;
+  private isIOSInitialized = false;
+
+  // Web Audio API scheduling
+  private scheduledEvents: Map<number, ScheduledEvent> = new Map();
+
+  constructor() {
+    this.iosAudioManager = IOSAudioManager.getInstance();
+    this.initializeForIOS();
+    this.setupEventListeners();
+  }
+
+  private async initializeForIOS(): Promise<void> {
+    if (Capacitor.getPlatform() === 'ios') {
+      try {
+        await this.iosAudioManager.initializeIOSAudio();
+        this.isIOSInitialized = true;
+        console.log('iOS audio successfully initialized');
+      } catch (error) {
+        console.error('Failed to initialize iOS audio:', error);
+        // Fallback to standard Web Audio API
+      }
+    }
+  }
+
+  private setupEventListeners(): void {
+    // Handle iOS-specific audio lifecycle events
+    window.addEventListener('audioInterruption', ((event: CustomEvent) => {
+      switch (event.detail.type) {
+        case 'begin':
+          this.handleAudioInterruptionBegin();
+          break;
+        case 'end':
+          this.handleAudioInterruptionEnd();
+          break;
+      }
+    }) as EventListener);
+  }
+
+  private handleAudioInterruptionBegin(): void {
+    // Pause audio generation but maintain state
+    if (this.isPlaying) {
+      this.wasPlayingBeforeInterruption = true;
+      this.stop(); // Stop audio generation
+    }
+  }
+
+  private async handleAudioInterruptionEnd(): Promise<void> {
+    // Resume audio if it was playing before interruption
+    if (this.wasPlayingBeforeInterruption) {
+      // Small delay to ensure system is ready
+      setTimeout(async () => {
+        try {
+          await this.start();
+          this.wasPlayingBeforeInterruption = false;
+        } catch (error) {
+          console.error('Failed to resume after interruption:', error);
+        }
+      }, 300);
+    }
+  }
 
   async initialize(): Promise<void> {
+    // Wait for iOS audio setup if needed
+    if (Capacitor.getPlatform() === 'ios' && !this.isIOSInitialized) {
+      await this.initializeForIOS();
+    }
+
     // If already initialized, just ensure it's running
     if (this.audioContext) {
       if (this.audioContext.state === 'suspended') {
@@ -45,15 +124,39 @@ export class AudioEngine {
     }
 
     try {
-      // Create high-quality audio context
-      // Removed explicit sampleRate to allow system default (avoids initialization errors on some devices)
-      this.audioContext = new AudioContext({
-        latencyHint: 'playback' // Use 'playback' for better background audio support
-      });
+      // Use iOS audio context if available, otherwise create new one
+      const iosContext = this.iosAudioManager.getAudioContext();
+      if (iosContext && Capacitor.getPlatform() === 'ios') {
+        this.audioContext = iosContext;
+      } else {
+        // Create high-quality audio context
+        // Removed explicit sampleRate to allow system default (avoids initialization errors on some devices)
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        this.audioContext = new AudioContext({
+          latencyHint: 'playback' // Use 'playback' for better background audio support
+        });
+      }
 
       // Resume context immediately if suspended
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
+      }
+
+      // iOS-specific context management
+      if (Capacitor.getPlatform() === 'ios') {
+        // Ensure context resumes properly
+        const resumeContext = async () => {
+          if (this.audioContext?.state === 'suspended') {
+            await this.audioContext.resume();
+          }
+        };
+
+        // Listen for our custom interruption events
+        window.addEventListener('audioInterruption', ((event: CustomEvent) => {
+          if (event.detail.type === 'end') {
+            resumeContext();
+          }
+        }) as EventListener);
       }
 
       // Set up event listeners for audio context state changes
@@ -225,28 +328,6 @@ export class AudioEngine {
     // Set initial gain
     this.isoGain.gain.setValueAtTime(baseGain, this.audioContext.currentTime);
     
-    // For isochronic tones: Use LFO to modulate the gain
-    // Scale LFO from -1..1 to 0..1, then scale to minGain..baseGain range
-    // LFO output: -1 to 1
-    // We want: minGain to baseGain
-    // Formula: (LFO + 1) / 2 * modulationRange + minGain
-    
-    // Scale LFO to 0-1 range
-    this.isoLFOGain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
-    this.isoLFOGain.gain.offset = 0.5;
-    
-    // Create a gain node to scale to our range
-    const rangeGain = this.audioContext.createGain();
-    rangeGain.gain.setValueAtTime(modulationRange, this.audioContext.currentTime);
-    rangeGain.gain.offset = minGain;
-    
-    // Connect LFO through the scaling chain
-    this.isoLFO.connect(this.isoLFOGain);
-    this.isoLFOGain.connect(rangeGain);
-    
-    // Use rangeGain output to control isoGain.gain via periodic updates
-    // Since we can't connect directly to AudioParam, we use a workaround
-    
     // Connect the main signal chain
     this.isoOscillator.connect(this.isoGain);
     this.isoGain.connect(this.masterGain);
@@ -257,8 +338,12 @@ export class AudioEngine {
     this.isoLFO.start(now);
     
     // Create and start the modulation loop using requestAnimationFrame for smoother updates
+    // Store the animation frame ID for proper cleanup
     const updateGain = () => {
-      if (!this.isPlaying || !this.isoGain || !this.audioContext) return;
+      if (!this.isPlaying || !this.isoGain || !this.audioContext) {
+        this.isoAnimationFrameId = null;
+        return;
+      }
       
       // Calculate LFO value based on time
       const time = this.audioContext.currentTime;
@@ -272,10 +357,10 @@ export class AudioEngine {
       // Apply gain with a very short ramp to prevent clicking
       this.isoGain.gain.setTargetAtTime(targetGain, time, 0.005);
       
-      requestAnimationFrame(updateGain);
+      this.isoAnimationFrameId = requestAnimationFrame(updateGain);
     };
     
-    requestAnimationFrame(updateGain);
+    this.isoAnimationFrameId = requestAnimationFrame(updateGain);
   }
 
   private getWaveformGainMultiplier(): number {
@@ -296,6 +381,15 @@ export class AudioEngine {
 
 
   private cleanup(): void {
+    // Cancel isochronic tone animation loop
+    if (this.isoAnimationFrameId !== null) {
+      cancelAnimationFrame(this.isoAnimationFrameId);
+      this.isoAnimationFrameId = null;
+    }
+
+    // Clear scheduled events
+    this.clearSchedule();
+
     // Clean up existing oscillators and nodes
     if (this.leftOscillator) {
       try {
@@ -365,6 +459,55 @@ export class AudioEngine {
       }
       this.isoLFOGain = null;
     }
+  }
+
+  // Web Audio API scheduling methods
+  scheduleFrequencyChange(frequency: number, time: number): void {
+    if (!this.audioContext) return;
+    
+    const scheduledTime = this.audioContext.currentTime + time;
+    
+    if (this.settings.mode === 'binaural') {
+      if (this.leftOscillator && this.rightOscillator) {
+        const leftFreq = Math.max(20, Math.min(20000, frequency));
+        const rightFreq = Math.max(20, Math.min(20000, frequency + this.settings.beatFrequency));
+        this.leftOscillator.frequency.setValueAtTime(leftFreq, scheduledTime);
+        this.rightOscillator.frequency.setValueAtTime(rightFreq, scheduledTime);
+      }
+    } else {
+      if (this.isoOscillator) {
+        const carrierFreq = Math.max(20, Math.min(20000, frequency));
+        this.isoOscillator.frequency.setValueAtTime(carrierFreq, scheduledTime);
+      }
+    }
+    
+    this.scheduledEvents.set(scheduledTime, { type: 'frequency', value: frequency, time: scheduledTime });
+  }
+
+  scheduleBeatFrequencyChange(beatFrequency: number, time: number): void {
+    if (!this.audioContext) return;
+    
+    const scheduledTime = this.audioContext.currentTime + time;
+    
+    if (this.settings.mode === 'binaural') {
+      if (this.leftOscillator && this.rightOscillator) {
+        const leftFreq = Math.max(20, Math.min(20000, this.settings.carrierFrequency));
+        const rightFreq = Math.max(20, Math.min(20000, this.settings.carrierFrequency + beatFrequency));
+        this.leftOscillator.frequency.setValueAtTime(leftFreq, scheduledTime);
+        this.rightOscillator.frequency.setValueAtTime(rightFreq, scheduledTime);
+      }
+    } else {
+      if (this.isoLFO) {
+        const beatFreq = Math.max(0.1, Math.min(100, beatFrequency));
+        this.isoLFO.frequency.setValueAtTime(beatFreq, scheduledTime);
+      }
+    }
+    
+    this.scheduledEvents.set(scheduledTime, { type: 'frequency', value: beatFrequency, time: scheduledTime });
+  }
+
+  clearSchedule(): void {
+    this.scheduledEvents.clear();
   }
 
   async start(): Promise<void> {

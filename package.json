@@ -14,8 +14,10 @@
     "ios:run": "npm run ios:build && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/app": "^7.0.1",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
+    "@capacitor/haptics": "^7.0.1",
     "@capacitor/ios": "^7.4.4",
     "@capacitor/splash-screen": "^7.0.3",
     "react": "^18.2.0",

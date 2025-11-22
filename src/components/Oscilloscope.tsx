@@ -94,9 +94,7 @@ const Oscilloscope: React.FC<OscilloscopeProps> = ({
         }
         ctx.stroke();
         
-        // Add glow effect
-        ctx.shadowBlur = 25;
-        ctx.stroke();
+        // Reset shadow for next frame
         ctx.shadowBlur = 0;
       }
     } else {

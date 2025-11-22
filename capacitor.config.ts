@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.bluestarbeats.app',
   appName: 'Blue Star Beats',
   webDir: 'dist',
+  bundledWebRuntime: false,
   server: {
     android: {
       allowMixedContent: true
@@ -25,9 +26,12 @@ const config: CapacitorConfig = {
       backgroundColor: '#1c1c3c',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
-      showSpinner: false,
+      showSpinner: true,
+      androidSpinnerStyle: 'large',
       iosSpinnerStyle: 'small',
-      spinnerColor: '#DAA520'
+      spinnerColor: '#ffffff',
+      splashFullScreen: true,
+      splashImmersive: false
     }
   }
 };

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { AudioEngine, AudioSettings } from './lib/audioEngine';
 import { SessionProtocol, GoalType, SessionLength } from './lib/sessionProtocols';
 import { premiumService } from './lib/premiumService';
+import { HapticFeedbackService } from './lib/hapticFeedbackService';
 import AudioControlPanel from './components/AudioControlPanel';
 import FrequencyControl from './components/FrequencyControl';
 import ModeSelector from './components/ModeSelector';
@@ -79,11 +80,40 @@ function App() {
   }, [audioEngine, isPlaying]);
 
   const handleGoalSelected = useCallback((goal: GoalType) => {
+    HapticFeedbackService.selectionChanged();
     setSelectedGoal(goal);
     setShowOnboarding(false);
   }, []);
 
+  const setupFrequencyRamp = useCallback((session: SessionProtocol) => {
+    if (!session.frequencyRamp) return;
+    
+    // Clear any existing scheduled events
+    audioEngine.clearSchedule();
+    
+    const { start, end, duration } = session.frequencyRamp;
+    const totalSteps = duration; // duration is in seconds
+    const stepSize = (end - start) / totalSteps;
+    
+    // Use Web Audio API scheduling instead of setInterval for precise timing
+    for (let step = 0; step <= totalSteps; step++) {
+      const timeOffset = step; // seconds from now
+      const newBeatFreq = Math.max(0.1, Math.min(100, start + (stepSize * step)));
+      
+      // Schedule the frequency change using Web Audio API
+      audioEngine.scheduleBeatFrequencyChange(newBeatFreq, timeOffset);
+    }
+    
+    // Update settings to reflect final frequency
+    setSettings(prev => {
+      const finalBeatFreq = Math.max(0.1, Math.min(100, end));
+      const newSettings = { ...prev, beatFrequency: finalBeatFreq };
+      return newSettings;
+    });
+  }, [audioEngine]);
+
   const handleSessionSelect = useCallback(async (session: SessionProtocol, length: SessionLength) => {
+    HapticFeedbackService.selectionChanged();
     setCurrentSession(session);
     setSessionLength(length);
     setShowSessionLibrary(false);
@@ -106,49 +136,18 @@ function App() {
     } else {
       audioEngine.updateSettings(newSettings);
     }
-  }, [isPlaying, settings.volume, audioEngine]);
-
-  const setupFrequencyRamp = useCallback((session: SessionProtocol) => {
-    if (!session.frequencyRamp) return;
-    
-    if (rampIntervalRef.current) {
-      clearInterval(rampIntervalRef.current);
-      rampIntervalRef.current = null;
-    }
-    
-    const { start, end, duration } = session.frequencyRamp;
-    const totalSteps = duration;
-    const stepSize = (end - start) / totalSteps;
-    let currentStep = 0;
-    
-    rampIntervalRef.current = window.setInterval(() => {
-      if (currentStep >= totalSteps || !isPlaying) {
-        if (rampIntervalRef.current) {
-          clearInterval(rampIntervalRef.current);
-          rampIntervalRef.current = null;
-        }
-        return;
-      }
-      
-      const newBeatFreq = Math.max(0.1, Math.min(100, start + (stepSize * currentStep)));
-      setSettings(prev => {
-        const newSettings = { ...prev, beatFrequency: newBeatFreq };
-        audioEngine.updateSettings({ beatFrequency: newBeatFreq });
-        return newSettings;
-      });
-      currentStep++;
-    }, 1000);
-  }, [isPlaying, audioEngine]);
+  }, [isPlaying, settings.volume, audioEngine, setupFrequencyRamp]);
 
   const handlePlay = useCallback(async () => {
     if (isPlaying) return;
 
     try {
+      HapticFeedbackService.impact('medium');
       await audioEngine.initialize();
       audioEngine.updateSettings(settings);
       await audioEngine.start();
       setIsPlaying(true);
-    deviceControls.updateNowPlaying(currentSession, true);
+      deviceControls.updateNowPlaying(currentSession, true);
       
       if (currentSession?.frequencyRamp) {
         setupFrequencyRamp(currentSession);
@@ -156,12 +155,15 @@ function App() {
     } catch (error) {
       console.error('Failed to start audio:', error);
       setIsPlaying(false);
+      HapticFeedbackService.notification('error');
       alert(`Failed to start audio: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your device settings and try again.`);
     }
   }, [isPlaying, audioEngine, settings, currentSession, setupFrequencyRamp]);
 
   const handleStop = useCallback(() => {
+    HapticFeedbackService.impact('light');
     audioEngine.stop();
+    audioEngine.clearSchedule(); // Clear any scheduled frequency changes
     setIsPlaying(false);
     deviceControls.updateNowPlaying(currentSession, false);
     if (rampIntervalRef.current) {
