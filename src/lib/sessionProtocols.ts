@@ -1,23 +1,6 @@
-export type GoalType = 'sleep' | 'anxiety' | 'focus' | 'meditation';
-export type SessionLength = 5 | 10 | 15 | 20 | 30 | 45 | 60 | 90 | 120;
-
-export interface SessionProtocol {
-  id: string;
-  name: string;
-  description: string;
-  goal: GoalType;
-  lengths: SessionLength[];
-  carrierFrequency: number;
-  beatFrequency: number;
-  waveform: 'sine' | 'square' | 'triangle' | 'sawtooth';
-  mode: 'binaural' | 'isochronic';
-  isPremium: boolean;
-  frequencyRamp?: {
-    start: number;
-    end: number;
-    duration: number; // in seconds
-  };
-}
+// Re-export types from types.ts for backward compatibility
+export type { GoalType, SessionLength, SessionProtocol, FrequencyRamp } from './types';
+import type { GoalType, SessionLength, SessionProtocol } from './types';
 
 export const SESSION_PROTOCOLS: SessionProtocol[] = [
   // SLEEP SESSIONS
