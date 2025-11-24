@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { HapticFeedbackService } from '../lib/hapticFeedbackService';
+import { ImpactStyle } from '@capacitor/haptics';
 
 interface SessionRatingProps {
   sessionId: string;
@@ -11,7 +12,7 @@ interface SessionRatingProps {
 }
 
 const SessionRating: React.FC<SessionRatingProps> = ({
-  sessionId,
+  sessionId: _sessionId,
   sessionName,
   onRate,
   onClose,
@@ -24,7 +25,7 @@ const SessionRating: React.FC<SessionRatingProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRatingClick = (value: number) => {
-    HapticFeedbackService.impact('light');
+    HapticFeedbackService.impact(ImpactStyle.Light);
     setRating(value);
   };
 
@@ -35,7 +36,7 @@ const SessionRating: React.FC<SessionRatingProps> = ({
     }
 
     setIsSubmitting(true);
-    HapticFeedbackService.impact('medium');
+    HapticFeedbackService.impact(ImpactStyle.Medium);
     
     try {
       await onRate(rating, notes.trim() || undefined);

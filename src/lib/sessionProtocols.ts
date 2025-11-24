@@ -1,6 +1,6 @@
 // Re-export types from types.ts for backward compatibility
 export type { GoalType, SessionLength, SessionProtocol, FrequencyRamp } from './types';
-import type { GoalType, SessionLength, SessionProtocol } from './types';
+import type { GoalType, SessionProtocol } from './types';
 
 export const SESSION_PROTOCOLS: SessionProtocol[] = [
   // SLEEP SESSIONS

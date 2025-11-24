@@ -1,4 +1,4 @@
-import { SessionProtocol, GoalType, SessionHistoryEntry } from './types';
+import { SessionProtocol, GoalType } from './types';
 import { userPreferences } from './userPreferences';
 import { premiumService } from './premiumService';
 import { SESSION_PROTOCOLS } from './sessionProtocols';

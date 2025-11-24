@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 // Haptic feedback service for mobile interactions
 export class HapticFeedbackService {
@@ -10,31 +11,26 @@ export class HapticFeedbackService {
     if (!this.isAvailable()) return;
     
     try {
-      // Use Capacitor Haptics plugin if available
-      const { Haptics } = await import('@capacitor/haptics');
       await Haptics.selectionChanged();
     } catch (error) {
-      // Fallback: Haptics plugin not installed, continue silently
       console.debug('Haptics not available:', error);
     }
   }
 
-  static async impact(style: 'heavy' | 'medium' | 'light' = 'medium'): Promise<void> {
+  static async impact(style: ImpactStyle = ImpactStyle.Medium): Promise<void> {
     if (!this.isAvailable()) return;
     
     try {
-      const { Haptics } = await import('@capacitor/haptics');
       await Haptics.impact({ style });
     } catch (error) {
       console.debug('Haptics not available:', error);
     }
   }
 
-  static async notification(type: 'success' | 'warning' | 'error'): Promise<void> {
+  static async notification(type: NotificationType): Promise<void> {
     if (!this.isAvailable()) return;
     
     try {
-      const { Haptics } = await import('@capacitor/haptics');
       await Haptics.notification({ type });
     } catch (error) {
       console.debug('Haptics not available:', error);

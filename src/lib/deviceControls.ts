@@ -9,8 +9,6 @@ declare global {
 // Device audio controls synchronization
 export class DeviceControls {
   private static instance: DeviceControls;
-  private isPlaying: boolean = false;
-  private currentSession: SessionProtocol | null = null;
 
   public static getInstance(): DeviceControls {
     if (!DeviceControls.instance) {
@@ -35,9 +33,6 @@ export class DeviceControls {
       this.handleDevicePause();
     });
 
-    navigator.mediaSession.setActionHandler('togglePlayPause', () => {
-      this.handleDeviceToggle();
-    });
     
     // Add seek handlers
     navigator.mediaSession.setActionHandler('stop', () => {
@@ -55,8 +50,7 @@ export class DeviceControls {
   }
 
   public updateNowPlaying(session: SessionProtocol | null, isPlaying: boolean) {
-    this.currentSession = session;
-    this.isPlaying = isPlaying;
+    // Store state for potential future use in device control handlers
 
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({

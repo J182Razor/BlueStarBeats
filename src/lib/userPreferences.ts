@@ -1,4 +1,4 @@
-import { UserPreferences, SessionHistoryEntry, SessionLength, WaveformType, AudioMode } from './types';
+import { UserPreferences, SessionHistoryEntry, SessionLength } from './types';
 
 const PREFERENCES_STORAGE_KEY = 'bluestarbeats_user_preferences';
 const HISTORY_STORAGE_KEY = 'bluestarbeats_session_history';
