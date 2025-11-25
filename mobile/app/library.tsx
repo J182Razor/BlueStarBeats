@@ -1,82 +1,102 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Moon, Brain, Lightbulb, Leaf } from 'lucide-react-native';
-import { GradientBackground } from '../components/GradientBackground';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { BookOpen, Clock, TrendingUp } from 'lucide-react-native';
 import { PlayerBar } from '../components/PlayerBar';
+import { useAudio } from '../contexts/AudioContext';
+import { useProgress } from '../contexts/ProgressContext';
+import { SESSIONS } from '../lib/sessions';
+
+const GALAXY_BG = 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?auto=format&fit=crop&q=80&w=2000';
 
 export default function LibraryScreen() {
-    const presets = [
-        { id: 1, title: 'Deep Sleep', subtitle: '1.5Hz', icon: Moon },
-        { id: 2, title: 'Focus Flow', subtitle: '14Hz', icon: Brain },
-        { id: 3, title: 'Creative Boost', subtitle: '8Hz', icon: Lightbulb },
-        { id: 4, title: 'Mindful Calm', subtitle: '4Hz', icon: Leaf }
-    ];
+  const router = useRouter();
+  const { currentSession, startSession } = useAudio();
+  const { recentActivity } = useProgress();
 
-    return (
-        <View className="flex-1">
-            <GradientBackground />
-            <SafeAreaView className="flex-1">
-                <ScrollView className="flex-1 px-4">
-                    <View className="flex-row justify-between items-center py-6 mb-2">
-                        <View className="flex-row items-center gap-3">
-                            <View className="w-10 h-10 rounded-full bg-orange-500 items-center justify-center">
-                                <View className="w-full h-full rounded-full bg-black/20" />
-                            </View>
-                            <Text className="text-2xl font-bold text-white">Loyalty Lounge</Text>
-                        </View>
-                        <TouchableOpacity className="p-2 rounded-full bg-white/10">
-                            <Settings size={24} color="white" />
-                        </TouchableOpacity>
-                    </View>
+  const favoriteSessions = recentActivity
+    .slice(0, 5)
+    .map(activity => SESSIONS.find(s => s.id === activity.sessionId))
+    .filter(Boolean);
 
-                    {/* Gold Card */}
-                    <View className="w-full aspect-[1.6] rounded-3xl overflow-hidden mb-8">
-                        <LinearGradient
-                            colors={['#FBBF24', '#F97316', '#CA8A04']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={{ flex: 1, padding: 24, justifyContent: 'space-between' }}
-                        >
-                            <View />
-                            <View>
-                                <Text className="text-2xl font-bold text-white mb-1">Alex Rivera</Text>
-                                <Text className="text-white/80 font-medium mb-4">Gamma Tier</Text>
+  return (
+    <View className="flex-1">
+      <ImageBackground
+        source={{ uri: GALAXY_BG }}
+        style={{ flex: 1 }}
+        resizeMode="cover"
+      >
+        <View className="absolute inset-0 bg-[#191121]/60" />
+        <SafeAreaView className="flex-1">
+          <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+            <View className="flex-row justify-between items-center py-6">
+              <Text className="text-2xl font-bold text-white">Library</Text>
+              <TouchableOpacity
+                onPress={() => router.push('/explore')}
+                className="p-2"
+              >
+                <TrendingUp size={24} color="white" />
+              </TouchableOpacity>
+            </View>
 
-                                <View className="flex-row items-end justify-between">
-                                    <Text className="text-white/70 text-sm max-w-[60%]">
-                                        Unlock exclusive access to Gamma wave frequencies.
-                                    </Text>
-                                    <TouchableOpacity className="px-6 py-2 bg-accent-purple rounded-full">
-                                        <Text className="text-white font-semibold">Unlock ...</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </LinearGradient>
-                    </View>
+            {favoriteSessions.length > 0 && (
+              <>
+                <Text className="text-lg font-bold text-white mb-4">Recently Played</Text>
+                <View className="gap-3 mb-8">
+                  {favoriteSessions.map((session) => (
+                    <TouchableOpacity
+                      key={session!.id}
+                      className="bg-white/5 rounded-2xl p-4 flex-row items-center gap-4 border border-white/10"
+                      onPress={async () => {
+                        await startSession(session!);
+                        router.push('/now-playing');
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View className="w-12 h-12 rounded-xl items-center justify-center bg-[#B388FF]/20">
+                        <BookOpen size={24} color="#B388FF" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-white font-medium">{session!.title}</Text>
+                        <Text className="text-white/50 text-xs">{session!.subtitle}</Text>
+                      </View>
+                      <Clock size={16} color="rgba(255,255,255,0.5)" />
+                      <Text className="text-white/50 text-xs">{session!.duration}m</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
-                    <Text className="text-lg font-bold text-white mb-4">Your Audio Presets</Text>
-                    <View className="flex-row flex-wrap justify-between mb-24">
-                        {presets.map((preset) => {
-                            const Icon = preset.icon;
-                            return (
-                                <TouchableOpacity
-                                    key={preset.id}
-                                    className="w-[48%] bg-white/5 rounded-3xl p-5 mb-4 border border-white/10"
-                                >
-                                    <View className="w-10 h-10 rounded-full bg-white/5 items-center justify-center mb-4">
-                                        <Icon size={20} color="white" />
-                                    </View>
-                                    <Text className="text-lg font-semibold text-white mb-1">{preset.title}</Text>
-                                    <Text className="text-white/50 text-sm">{preset.subtitle}</Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-            <PlayerBar />
-        </View>
-    );
+            <Text className="text-lg font-bold text-white mb-4">All Sessions</Text>
+            <View className="gap-3 mb-24">
+              {SESSIONS.map((session) => (
+                <TouchableOpacity
+                  key={session.id}
+                  className="bg-white/5 rounded-2xl p-4 flex-row items-center gap-4 border border-white/10"
+                  onPress={async () => {
+                    await startSession(session);
+                    router.push('/now-playing');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View className="w-12 h-12 rounded-xl items-center justify-center bg-[#B388FF]/20">
+                    <BookOpen size={24} color="#B388FF" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white font-medium">{session.title}</Text>
+                    <Text className="text-white/50 text-xs">{session.subtitle}</Text>
+                  </View>
+                  <Clock size={16} color="rgba(255,255,255,0.5)" />
+                  <Text className="text-white/50 text-xs">{session.duration}m</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+        {currentSession && <PlayerBar />}
+      </ImageBackground>
+    </View>
+  );
 }
