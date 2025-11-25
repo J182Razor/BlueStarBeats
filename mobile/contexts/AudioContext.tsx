@@ -10,10 +10,12 @@ interface AudioContextType {
   isPlaying: boolean;
   currentSession: Session | null;
   audioEngine: ReactNativeAudioEngine | null;
+  audioSettings: AudioSettings | null;
   startSession: (session: Session) => Promise<void>;
   stopSession: () => Promise<void>;
   togglePlayback: () => Promise<void>;
   setVolume: (volume: number) => Promise<void>;
+  updateAudioSettings: (settings: Partial<AudioSettings>) => Promise<void>;
   volume: number;
 }
 
@@ -23,12 +25,22 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [volume, setVolumeState] = useState(0.7);
+  const [audioSettings, setAudioSettings] = useState<AudioSettings | null>(null);
   const audioEngineRef = useRef<ReactNativeAudioEngine | null>(null);
 
   useEffect(() => {
     // Initialize audio engine
     const { getAudioEngine } = require('../lib/audioEngine');
     audioEngineRef.current = getAudioEngine();
+
+    // Set initial audio settings
+    setAudioSettings({
+      carrierFrequency: 440,
+      beatFrequency: 7.83,
+      waveform: 'sine',
+      mode: 'binaural',
+      volume: 0.7
+    });
 
     return () => {
       // Cleanup on unmount
@@ -58,6 +70,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       await audioEngineRef.current.start();
 
       setCurrentSession(session);
+      setAudioSettings(prev => ({ ...prev!, ...settings }));
       setIsPlaying(true);
     } catch (error) {
       console.error('Failed to start session:', error);
@@ -98,8 +111,20 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       await audioEngineRef.current.setVolume(newVolume);
       setVolumeState(newVolume);
+      setAudioSettings(prev => prev ? { ...prev, volume: newVolume } : null);
     } catch (error) {
       console.error('Failed to set volume:', error);
+    }
+  };
+
+  const updateAudioSettings = async (settings: Partial<AudioSettings>) => {
+    if (!audioEngineRef.current) return;
+
+    try {
+      await audioEngineRef.current.updateSettings(settings);
+      setAudioSettings(prev => prev ? { ...prev, ...settings } : null);
+    } catch (error) {
+      console.error('Failed to update audio settings:', error);
     }
   };
 
@@ -109,10 +134,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isPlaying,
         currentSession,
         audioEngine: audioEngineRef.current,
+        audioSettings,
         startSession,
         stopSession,
         togglePlayback,
         setVolume,
+        updateAudioSettings,
         volume,
       }}
     >

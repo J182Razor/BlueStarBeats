@@ -1,197 +1,143 @@
-# Blue Star Beats - Precision Brainwave Entrainment
+# Blue Star Beats
 
-A modern, minimalist web application for brainwave entrainment using binaural beats and isochronic tones. Blue Star Beats provides a clean, utility-first interface designed to help users achieve deeper states of meditation, focus, sleep, and relaxation without distractions.
+A modern web application for generating binaural beats and isochronic tones for meditation, focus, and relaxation. Built with React, TypeScript, and the Web Audio API.
 
-## 🌟 Features
+![Blue Star Beats](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Blue+Star+Beats)
 
-### Core Features
+## Features
 
-1. **Anti-Bloat Interface**
-   - Clean, minimalist design that gets you from "stressed" to "relaxed" in two taps
-   - No distracting videos, cluttered menus, or buggy add-ons
-   - Fast, powerful tool that does its job instantly
+🎵 **High-Quality Audio Engine**
+- Studio-quality audio with 44.1kHz sample rate
+- Advanced anti-aliasing and filtering
+- Distortion-free playback with professional dynamics compression
+- Instant audio loading and playback
 
-2. **Pro-Mode Session Editor**
-   - Advanced, user-controlled customization of entrainment sessions
-   - Adjust exact frequencies, tweak intensity, and build custom protocols
-   - Create perfectly tailored experiences for your unique brain
+🎛️ **Precise Frequency Control**
+- Carrier frequency range: 0.001 Hz to 9999 Hz
+- Beat/pulse frequency range: 0.001 Hz to 9999 Hz
+- 0.001 Hz precision for accurate frequency generation
+- Logarithmic slider mapping for intuitive control
 
-3. **Pure, Uninterrupted Entrainment**
-   - 100% free of talking, guided narratives, and filler
-   - Achieve deeper states of meditation, focus, or sleep
-   - Your brain is free to truly sync with the entrainment
+🧠 **Audio Modes**
+- **Binaural Beats**: Different frequencies in each ear create beat perception
+- **Isochronic Tones**: Pulsing tones at regular intervals
 
-4. **Transparent & Honest Pricing**
-   - One-time "Lifetime" purchase option
-   - Clear, science-based session descriptions
-   - No subscription anxiety - buy once, own forever
+🌊 **Waveform Types**
+- **Sine**: Pure, smooth tone
+- **Square**: Sharp, digital tone
+- **Triangle**: Soft, mellow tone
+- **Sawtooth**: Bright, buzzy tone
 
-5. **Seamless Audio Layering**
-   - Audio engine runs in the background
-   - Layer BWE underneath your other apps
-   - Enhance the apps you already love
+📊 **Real-Time Visualization**
+- Live oscilloscope with animated blue waveforms
+- Full-width waveform display for immersive experience
+- Visual feedback for audio activity
 
-### Session Protocols
+🎨 **Beautiful Design**
+- Spiritual meditation-themed background
+- Rounded corners and symmetrical spacing
+- Responsive design for all devices
+- Professional gradient color schemes
 
-#### Sleep Sessions
-- **Sleep Onset** (20m, 30m, 45m) - Theta to Deep Delta transition
-- **Deep Sleep** (45m, 60m, 90m) - Deep Delta waves for restorative sleep
-- **Sleepy Head** (10m) - Quick sleep aid
+## Technology Stack
 
-#### Anxiety & Stress Sessions
-- **5-Minute Panic Reset** (5m) - Fast-acting Alpha waves
-- **Unwind & Relax** (15m, 30m) - Alpha to Theta transition
-- **10-Min Stress Reset** (10m) - Quick stress relief
-- **Calm Flow** (45m, 60m) - Extended Alpha session (Premium)
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **Audio**: Web Audio API
+- **Icons**: Lucide React
 
-#### Focus Sessions
-- **Focus Flow** (45m, 60m, 90m) - Beta waves for active work
-- **Creative Boost** (20m, 30m) - Schumann Resonance for insight (Premium)
-- **Deep Work** (60m, 90m) - High Beta for intense concentration (Premium)
+## Prerequisites
 
-#### Meditation Sessions
-- **Alpha Meditation** (20m, 30m) - Calm Alpha for relaxed awareness
-- **Theta Meditation** (30m, 45m, 60m) - Deep Theta for profound states (Premium)
-- **Gamma Peak** (15m, 30m) - High-frequency Gamma for peak performance (Premium)
+- Node.js 18+ 
+- npm or yarn package manager
 
-### Freemium Model
+## Installation
 
-**Free Tier:**
-- Access to 7+ core sessions
-- Basic session lengths
-- Standard waveforms and modes
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd BlueStarBeats
+   ```
 
-**Premium Tier:**
-- Unlock all 50+ sessions
-- All session lengths (5min to 2 hours)
-- Advanced protocols (Gamma, custom frequencies)
-- Mix BWE with your own music
-- Offline mode
-- Priority support
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-**Pricing:**
-- Monthly: $14.99/month
-- Annual: $69.99/year (Save 58% - $5.83/month)
-- Lifetime: $399.99 (one-time purchase)
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-## 🚀 Technology Stack
+4. **Open in browser**
+   Navigate to `http://localhost:5173`
 
-- **Framework:** React 18 with TypeScript
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS
-- **Audio Engine:** Web Audio API
-- **State Management:** React Hooks
-
-## 📋 Prerequisites
-
-- Node.js 18+ and npm
-- Modern web browser with Web Audio API support
-- Headphones recommended for best binaural beats experience
-
-## 📱 iOS App
-
-An iOS version of Blue Star Beats is available! See [docs/IOS_SETUP.md](./docs/IOS_SETUP.md) for detailed iOS setup and build instructions.
-
-**Quick Start for iOS:**
-```bash
-npm install
-npm run build
-npm run ios:open
-```
-
-## 🛠️ Installation
-
-See [docs/IOS_SETUP.md](./docs/IOS_SETUP.md) for installation instructions.
-
-### Quick Start
+## Build for Production
 
 ```bash
-# Clone the repository
-git clone https://github.com/J182Razor/BlueStarBeats.git
-
-# Navigate to project directory
-cd BlueStarBeats
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
 npm run build
 ```
 
-## 📖 Usage
+The built files will be in the `dist/` directory.
 
-See [docs/USAGE.md](./docs/USAGE.md) for comprehensive usage documentation.
+## Usage
 
-### Getting Started
+1. **Select Audio Mode**
+   - Choose between Binaural Beats or Isochronic Tones
+   - Use headphones for the best binaural beats experience
 
-1. **Onboarding:** Select your primary goal (Sleep, Anxiety, Focus, or Meditation)
-2. **Choose Session:** Browse the session library and select a protocol
-3. **Start Session:** Click play and let the brainwave entrainment begin
-4. **Pro Mode:** Toggle advanced controls for custom frequency adjustments
+2. **Choose Waveform Type**
+   - Select from Sine, Square, Triangle, or Sawtooth waves
+   - Each waveform has a unique tonal character
 
-## 🎯 Target Market
+3. **Adjust Frequencies**
+   - Set the carrier frequency (base tone)
+   - Set the beat/pulse frequency (modulation rate)
+   - Use sliders or input fields for precise control
 
-### Tier 1: Core Market (Primary Revenue Engine)
-- **Insomnia / Poor Sleep** (84M people)
-- **Generalized Anxiety** (40M people)
-- **Difficulty Focusing** (~30M people)
+4. **Control Playback**
+   - Click the play button to start audio generation
+   - Adjust volume with the slider
+   - Watch the live waveform visualization
 
-### Tier 2: Growth Market
-- **Ineffective Meditation** (38M people)
-- **Lack of Motivation / Burnout** (~100M people)
+## Audio Engine Details
 
-## 🧠 Science Behind Brainwave Entrainment
+The Blue Star Beats audio engine is optimized for high-quality, distortion-free playback:
 
-Brainwave entrainment uses audio frequencies to guide your brain into specific states:
+- **Sample Rate**: 44.1kHz for optimal compatibility
+- **Anti-Aliasing**: Lowpass filter at 18kHz prevents aliasing artifacts
+- **Highpass Filter**: 20Hz filter removes unwanted low-frequency rumble
+- **Dynamics Compression**: Prevents clipping and maintains consistent levels
+- **Gain Staging**: Automatic normalization for different waveforms
+- **Smooth Transitions**: Click-free frequency changes and volume adjustments
 
-- **Delta (1-4 Hz):** Deep sleep, healing, regeneration
-- **Theta (4-8 Hz):** Deep meditation, creativity, REM sleep
-- **Alpha (8-13 Hz):** Relaxation, calm focus, light meditation
-- **Beta (13-30 Hz):** Active thinking, focus, concentration
-- **Gamma (30-100 Hz):** Peak performance, insight, binding
-
-### Binaural Beats
-Different frequencies played in each ear create a perceived beat frequency in the brain. Requires headphones.
-
-### Isochronic Tones
-Regularly pulsing tones that don't require headphones but are effective for rhythmic entrainment.
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 BlueStarBeats/
 ├── src/
 │   ├── components/          # React components
 │   │   ├── AudioControlPanel.tsx
-│   │   ├── ErrorBoundary.tsx
 │   │   ├── FrequencyControl.tsx
 │   │   ├── ModeSelector.tsx
-│   │   ├── Onboarding.tsx
 │   │   ├── Oscilloscope.tsx
-│   │   ├── PremiumModal.tsx
-│   │   ├── SessionLibrary.tsx
-│   │   ├── SessionTimer.tsx
-│   │   └── WaveformSelector.tsx
+│   │   ├── WaveformSelector.tsx
+│   │   └── ErrorBoundary.tsx
 │   ├── lib/                 # Core libraries
-│   │   ├── audioEngine.ts   # Web Audio API engine
-│   │   ├── premiumService.ts # Premium feature management
-│   │   └── sessionProtocols.ts # Session definitions
-│   ├── App.tsx              # Main application component
+│   │   └── audioEngine.ts   # High-quality audio engine
+│   ├── App.tsx             # Main application component
 │   ├── main.tsx            # Application entry point
 │   └── index.css           # Global styles
-├── public/                  # Static assets
-├── dist/                    # Production build output
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+├── public/                 # Static assets
+├── package.json           # Dependencies and scripts
+├── vite.config.ts         # Vite configuration
+├── tailwind.config.js     # Tailwind CSS configuration
+├── tsconfig.json          # TypeScript configuration
+└── README.md              # This file
 ```
 
-## 🧪 Development
+## Development
 
 ### Available Scripts
 
@@ -200,55 +146,54 @@ BlueStarBeats/
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 
-### Code Style
+### Key Components
 
-- TypeScript strict mode enabled
-- ESLint with React hooks rules
-- Prettier formatting (recommended)
+- **AudioEngine**: Core audio processing with Web Audio API
+- **AudioControlPanel**: Play/pause and volume controls
+- **FrequencyControl**: Precise frequency input with sliders
+- **ModeSelector**: Binaural beats vs isochronic tones
+- **WaveformSelector**: Visual waveform type selection
+- **Oscilloscope**: Real-time audio visualization
 
-## 🐛 Troubleshooting
+## Browser Compatibility
 
-See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) for comprehensive troubleshooting guide.
+- Chrome 66+
+- Firefox 60+
+- Safari 14+
+- Edge 79+
 
-### Quick Fixes
+*Note: Web Audio API support required*
 
-**Audio Not Playing:**
-- Ensure your browser supports Web Audio API
-- Check browser permissions for audio
-- Try clicking the play button to resume audio context
+## Performance Optimizations
 
-**Headphones Not Working:**
-- Binaural beats require stereo headphones
-- Check your system audio settings
-- Ensure headphones are properly connected
+- Instant audio loading and playback
+- Efficient audio node management
+- Smooth UI interactions with optimized React rendering
+- Responsive design with mobile touch support
 
-**Performance Issues:**
-- Close other browser tabs
-- Disable browser extensions
-- Use a modern browser (Chrome, Firefox, Edge, Safari)
+## Contributing
 
-**iOS Build Issues:**
-- See [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) for detailed solutions
-- Run `./scripts/diagnose-build-error.sh` to diagnose issues
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📝 License
+## License
 
-Copyright © 2025 Blue Star Beats. All rights reserved.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🤝 Contributing
+## Acknowledgments
 
-This is a private project. For issues or feature requests, please contact the maintainer.
+- Built with modern web technologies for optimal performance
+- Inspired by meditation and focus enhancement techniques
+- Designed for both casual users and audio enthusiasts
 
-## 📧 Support
+## Support
 
-For support, email support@bluestarbeats.com or open an issue on GitHub.
-
-## 🙏 Acknowledgments
-
-- Web Audio API documentation
-- Brainwave entrainment research community
-- React and Vite teams for excellent tooling
+For support, please open an issue on GitHub or contact the development team.
 
 ---
 
-**Blue Star Beats** - Tune Your Mind. Unlock Your State.
+**Blue Star Beats** - Experience the power of binaural beats and isochronic tones for meditation, focus, and relaxation.
+

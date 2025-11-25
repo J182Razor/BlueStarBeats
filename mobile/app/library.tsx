@@ -20,15 +20,15 @@ export default function LibraryScreen() {
     .map(activity => SESSIONS.find(s => s.id === activity.sessionId))
     .filter(Boolean);
 
-  return (
-    <View className="flex-1">
+    return (
+        <View className="flex-1">
       <ImageBackground
         source={{ uri: GALAXY_BG }}
         style={{ flex: 1 }}
         resizeMode="cover"
       >
         <View className="absolute inset-0 bg-[#191121]/60" />
-        <SafeAreaView className="flex-1">
+            <SafeAreaView className="flex-1">
           <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
             <View className="flex-row justify-between items-center py-6">
               <Text className="text-2xl font-bold text-white">Library</Text>
@@ -37,8 +37,8 @@ export default function LibraryScreen() {
                 className="p-2"
               >
                 <TrendingUp size={24} color="white" />
-              </TouchableOpacity>
-            </View>
+                        </TouchableOpacity>
+                    </View>
 
             {favoriteSessions.length > 0 && (
               <>
@@ -56,23 +56,23 @@ export default function LibraryScreen() {
                     >
                       <View className="w-12 h-12 rounded-xl items-center justify-center bg-[#B388FF]/20">
                         <BookOpen size={24} color="#B388FF" />
-                      </View>
+                                </View>
                       <View className="flex-1">
                         <Text className="text-white font-medium">{session!.title}</Text>
                         <Text className="text-white/50 text-xs">{session!.subtitle}</Text>
-                      </View>
+                            </View>
                       <Clock size={16} color="rgba(255,255,255,0.5)" />
                       <Text className="text-white/50 text-xs">{session!.duration}m</Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                    </View>
               </>
             )}
 
             <Text className="text-lg font-bold text-white mb-4">All Sessions</Text>
             <View className="gap-3 mb-24">
               {SESSIONS.map((session) => (
-                <TouchableOpacity
+                                <TouchableOpacity
                   key={session.id}
                   className="bg-white/5 rounded-2xl p-4 flex-row items-center gap-4 border border-white/10"
                   onPress={async () => {
@@ -80,23 +80,23 @@ export default function LibraryScreen() {
                     router.push('/now-playing');
                   }}
                   activeOpacity={0.7}
-                >
+                                >
                   <View className="w-12 h-12 rounded-xl items-center justify-center bg-[#B388FF]/20">
                     <BookOpen size={24} color="#B388FF" />
                   </View>
                   <View className="flex-1">
                     <Text className="text-white font-medium">{session.title}</Text>
                     <Text className="text-white/50 text-xs">{session.subtitle}</Text>
-                  </View>
+                                    </View>
                   <Clock size={16} color="rgba(255,255,255,0.5)" />
                   <Text className="text-white/50 text-xs">{session.duration}m</Text>
-                </TouchableOpacity>
+                                </TouchableOpacity>
               ))}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         {currentSession && <PlayerBar />}
       </ImageBackground>
-    </View>
-  );
+        </View>
+    );
 }

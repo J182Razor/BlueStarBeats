@@ -52,17 +52,17 @@ export default function ProgressDashboardScreen() {
   const streakProgress = (stats.currentStreak / 7) * 100;
   const timeProgress = Math.min((stats.totalTimeMeditated / 1000) * 100, 100);
 
-  return (
-    <View className="flex-1">
+    return (
+        <View className="flex-1">
       <ImageBackground
         source={{ uri: GALAXY_BG }}
         style={{ flex: 1 }}
         resizeMode="cover"
       >
         <View className="absolute inset-0 bg-[#191121]/60" />
-        <SafeAreaView className="flex-1">
+            <SafeAreaView className="flex-1">
           <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-            <View className="flex-row items-center py-6 mb-6">
+                    <View className="flex-row items-center py-6 mb-6">
               <TouchableOpacity 
                 className="p-2 rounded-full bg-white/10 mr-4"
                 onPress={() => {
@@ -73,16 +73,16 @@ export default function ProgressDashboardScreen() {
                   }
                 }}
               >
-                <ArrowLeft size={24} color="white" />
-              </TouchableOpacity>
+                            <ArrowLeft size={24} color="white" />
+                        </TouchableOpacity>
               <Text className="text-xl font-bold text-white flex-1 text-center pr-10">
                 Progress Dashboard
               </Text>
-            </View>
+                    </View>
 
-            {/* Circular Progress Section */}
-            <View className="flex-row gap-4 mb-6">
-              <View className="flex-1 bg-white/5 rounded-3xl p-4 items-center aspect-square justify-center border border-white/10">
+                    {/* Circular Progress Section */}
+                    <View className="flex-row gap-4 mb-6">
+                        <View className="flex-1 bg-white/5 rounded-3xl p-4 items-center aspect-square justify-center border border-white/10">
                 <View className="relative items-center justify-center mb-2">
                   <Svg width={96} height={96}>
                     <Circle
@@ -108,13 +108,13 @@ export default function ProgressDashboardScreen() {
                   </Svg>
                   <View className="absolute items-center justify-center">
                     <Text className="text-2xl font-bold text-white">{stats.currentStreak}/7</Text>
-                    <Text className="text-xs text-white/50">Days</Text>
+                                <Text className="text-xs text-white/50">Days</Text>
                   </View>
-                </View>
-                <Text className="text-sm font-medium text-white mt-2">Current Streak</Text>
-              </View>
+                            </View>
+                            <Text className="text-sm font-medium text-white mt-2">Current Streak</Text>
+                        </View>
 
-              <View className="flex-1 bg-white/5 rounded-3xl p-4 items-center aspect-square justify-center border border-white/10">
+                        <View className="flex-1 bg-white/5 rounded-3xl p-4 items-center aspect-square justify-center border border-white/10">
                 <View className="relative items-center justify-center mb-2">
                   <Svg width={96} height={96}>
                     <Circle
@@ -146,63 +146,63 @@ export default function ProgressDashboardScreen() {
                       {stats.totalTimeMeditated % 60}m
                     </Text>
                   </View>
-                </View>
-                <Text className="text-sm font-medium text-white mt-2">Time Meditated</Text>
-              </View>
-            </View>
+                            </View>
+                            <Text className="text-sm font-medium text-white mt-2">Time Meditated</Text>
+                        </View>
+                    </View>
 
-            {/* Stats Row */}
-            <View className="flex-row gap-4 mb-8">
-              <View className="flex-1 bg-white/5 rounded-2xl p-5 border border-white/10">
-                <Text className="text-white/50 text-sm mb-1">Total Sessions</Text>
+                    {/* Stats Row */}
+                    <View className="flex-row gap-4 mb-8">
+                        <View className="flex-1 bg-white/5 rounded-2xl p-5 border border-white/10">
+                            <Text className="text-white/50 text-sm mb-1">Total Sessions</Text>
                 <Text className="text-3xl font-bold text-white">{stats.totalSessions}</Text>
-              </View>
-              <View className="flex-1 bg-white/5 rounded-2xl p-5 border border-white/10">
-                <Text className="text-white/50 text-sm mb-1">Favorite</Text>
+                        </View>
+                        <View className="flex-1 bg-white/5 rounded-2xl p-5 border border-white/10">
+                            <Text className="text-white/50 text-sm mb-1">Favorite</Text>
                 <Text className="text-2xl font-bold text-white capitalize">{stats.favoriteCategory}</Text>
-              </View>
-            </View>
+                        </View>
+                    </View>
 
-            {/* Recent Activity */}
-            <Text className="text-lg font-bold text-white mb-4">Recent Activity</Text>
-            <View className="gap-3 mb-24">
+                    {/* Recent Activity */}
+                    <Text className="text-lg font-bold text-white mb-4">Recent Activity</Text>
+                    <View className="gap-3 mb-24">
               {recentActivity.slice(0, 10).map((activity, index) => {
                 const Icon = getActivityIcon(activity.category);
-                return (
+                            return (
                   <View
                     key={index}
                     className="bg-white/5 rounded-2xl p-4 flex-row items-center gap-4 border border-white/10"
                   >
                     <View className="w-12 h-12 rounded-xl items-center justify-center bg-[#B388FF]/20">
                       <Icon size={24} color="#B388FF" />
-                    </View>
-                    <View className="flex-1">
+                                    </View>
+                                    <View className="flex-1">
                       <Text className="text-white font-medium" numberOfLines={1}>
                         {activity.sessionTitle}
                       </Text>
                       <Text className="text-white/50 text-xs">
                         {activity.category} · {activity.duration} min · {getTimeAgo(activity.completedAt)}
                       </Text>
-                    </View>
+                                    </View>
                     {activity.notes && (
-                      <TouchableOpacity className="px-3 py-1.5 rounded-lg bg-white/5 flex-row items-center gap-2">
-                        <FileText size={14} color="rgba(255,255,255,0.7)" />
-                        <Text className="text-xs text-white/70">Notes</Text>
-                      </TouchableOpacity>
+                                    <TouchableOpacity className="px-3 py-1.5 rounded-lg bg-white/5 flex-row items-center gap-2">
+                                        <FileText size={14} color="rgba(255,255,255,0.7)" />
+                                        <Text className="text-xs text-white/70">Notes</Text>
+                                    </TouchableOpacity>
                     )}
-                  </View>
-                );
-              })}
+                                </View>
+                            );
+                        })}
               {recentActivity.length === 0 && (
                 <Text className="text-white/50 text-center py-8">
                   No sessions yet. Start your first session!
                 </Text>
               )}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         {currentSession && <PlayerBar />}
       </ImageBackground>
-    </View>
-  );
+        </View>
+    );
 }

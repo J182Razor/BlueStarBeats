@@ -10,27 +10,27 @@ export const PlayerBar = () => {
 
   if (!currentSession) return null;
 
-  return (
+    return (
     <TouchableOpacity
       onPress={() => router.push('/now-playing')}
       className="absolute bottom-24 left-4 right-4 bg-white/10 rounded-3xl p-4 flex-row items-center border border-white/10 backdrop-blur-sm"
       activeOpacity={0.8}
     >
-      <Image
+            <Image
         source={{
           uri: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=200',
         }}
-        className="w-12 h-12 rounded-xl"
-      />
+                className="w-12 h-12 rounded-xl"
+            />
 
-      <View className="flex-1 ml-4">
+            <View className="flex-1 ml-4">
         <Text className="text-white font-semibold" numberOfLines={1}>
           {currentSession.subtitle || currentSession.title}
         </Text>
         <Text className="text-white/50 text-xs" numberOfLines={1}>
           {currentSession.category} Session
         </Text>
-      </View>
+            </View>
 
       <TouchableOpacity
         onPress={(e) => {
@@ -43,9 +43,9 @@ export const PlayerBar = () => {
         {isPlaying ? (
           <Pause size={20} color="white" fill="white" />
         ) : (
-          <Play size={20} color="white" fill="white" />
+                <Play size={20} color="white" fill="white" />
         )}
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+            </TouchableOpacity>
+    );
 };

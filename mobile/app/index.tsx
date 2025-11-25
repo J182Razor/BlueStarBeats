@@ -14,7 +14,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { startSession, currentSession } = useAudio();
 
-  const categories = [
+    const categories = [
     { 
       id: 'sleep', 
       title: 'Sleep', 
@@ -47,7 +47,7 @@ export default function HomeScreen() {
       color: 'text-teal-300',
       session: getSessionsByCategory('relax')[0]
     }
-  ];
+    ];
 
   const handleCategoryPress = async (category: typeof categories[0]) => {
     if (category.session) {
@@ -56,54 +56,54 @@ export default function HomeScreen() {
     }
   };
 
-  return (
-    <View className="flex-1">
+    return (
+        <View className="flex-1">
       <ImageBackground
         source={{ uri: GALAXY_BG }}
         style={{ flex: 1 }}
         resizeMode="cover"
       >
         <View className="absolute inset-0 bg-[#191121]/60" />
-        <SafeAreaView className="flex-1">
-          <ScrollView className="flex-1 px-4">
-            <View className="flex-row justify-between items-center py-6">
-              <View className="flex-row items-center gap-3">
+            <SafeAreaView className="flex-1">
+                <ScrollView className="flex-1 px-4">
+                    <View className="flex-row justify-between items-center py-6">
+                        <View className="flex-row items-center gap-3">
                 <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-white/20">
                   <Text className="text-white text-lg">👤</Text>
-                </View>
-                <Text className="text-2xl font-bold text-white">Good morning, Alex</Text>
-              </View>
+                            </View>
+                            <Text className="text-2xl font-bold text-white">Good morning, Alex</Text>
+                        </View>
               <TouchableOpacity 
                 className="p-2 rounded-full bg-white/10 border border-white/20"
                 onPress={() => router.push('/profile')}
               >
-                <Settings size={24} color="white" />
-              </TouchableOpacity>
-            </View>
+                            <Settings size={24} color="white" />
+                        </TouchableOpacity>
+                    </View>
 
-            <View className="flex-row flex-wrap justify-between">
-              {categories.map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
+                    <View className="flex-row flex-wrap justify-between">
+                        {categories.map((cat) => {
+                            const Icon = cat.icon;
+                            return (
+                                <TouchableOpacity
+                                    key={cat.id}
                     className="w-[48%] bg-white/5 rounded-3xl p-5 mb-4 border border-white/10 backdrop-blur-sm"
                     onPress={() => handleCategoryPress(cat)}
                     activeOpacity={0.7}
-                  >
+                                >
                     <View className="w-12 h-12 rounded-full bg-white/5 items-center justify-center mb-4">
                       <Icon size={24} color="white" />
+                                    </View>
+                                    <Text className="text-lg font-semibold text-white mb-1">{cat.title}</Text>
+                                    <Text className="text-white/50 text-sm">{cat.subtitle}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
-                    <Text className="text-lg font-semibold text-white mb-1">{cat.title}</Text>
-                    <Text className="text-white/50 text-sm">{cat.subtitle}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
+                </ScrollView>
+            </SafeAreaView>
         {currentSession && <PlayerBar />}
       </ImageBackground>
-    </View>
-  );
+        </View>
+    );
 }

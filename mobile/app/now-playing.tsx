@@ -1,74 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Pause, Play, ChevronDown } from 'lucide-react-native';
+import { ArrowLeft, Play, Pause, Volume2 } from 'lucide-react-native';
 import { useAudio } from '../contexts/AudioContext';
-import { useProgress } from '../contexts/ProgressContext';
-import Svg, { Circle } from 'react-native-svg';
+import Slider from '@react-native-community/slider';
 
 const GALAXY_BG = 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?auto=format&fit=crop&q=80&w=2000';
-const WAVEFORM_BG = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1000';
 
-const { width } = Dimensions.get('window');
+const WAVEFORMS = [
+  { value: 'sine', label: 'Sine', icon: '~' },
+  { value: 'square', label: 'Square', icon: '⎍' },
+  { value: 'sawtooth', label: 'Sawtooth', icon: '⟋' },
+  { value: 'triangle', label: 'Triangle', icon: '△' }
+] as const;
+
+const MODES = [
+  { value: 'binaural', label: 'Binaural', description: 'Stereo beats' },
+  { value: 'isochronic', label: 'Isochronic', description: 'Pulsed tones' }
+] as const;
 
 export default function NowPlayingScreen() {
   const router = useRouter();
-  const { isPlaying, currentSession, togglePlayback, stopSession, setVolume, volume } = useAudio();
-  const { addSession } = useProgress();
-  const [timeLeft, setTimeLeft] = useState(0);
+  const { currentSession, isPlaying, togglePlayback, audioSettings, updateAudioSettings } = useAudio();
+
+  const [carrierFreq, setCarrierFreq] = useState(audioSettings?.carrierFrequency || 440);
+  const [beatFreq, setBeatFreq] = useState(audioSettings?.beatFrequency || 7.83);
+  const [volume, setVolume] = useState(audioSettings?.volume || 0.7);
 
   useEffect(() => {
-    if (!currentSession) {
-      router.back();
-      return;
+    if (audioSettings) {
+      setCarrierFreq(audioSettings.carrierFrequency);
+      setBeatFreq(audioSettings.beatFrequency);
+      setVolume(audioSettings.volume);
     }
+  }, [audioSettings]);
 
-    setTimeLeft(currentSession.duration * 60); // Convert to seconds
-
-    const interval = setInterval(() => {
-      if (isPlaying) {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            // Session completed
-            addSession(currentSession, currentSession.duration);
-            stopSession();
-            router.push('/feedback');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, currentSession]);
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleCarrierChange = (value: number) => {
+    setCarrierFreq(value);
+    updateAudioSettings?.({ carrierFrequency: value });
   };
 
-  const progress = currentSession
-    ? 1 - timeLeft / (currentSession.duration * 60)
-    : 0;
-
-  const circumference = 2 * Math.PI * 48;
-  const strokeDashoffset = circumference * (1 - progress);
-
-  const handleEnd = async () => {
-    if (currentSession && timeLeft < currentSession.duration * 60) {
-      const completedMinutes = Math.floor((currentSession.duration * 60 - timeLeft) / 60);
-      if (completedMinutes > 0) {
-        await addSession(currentSession, completedMinutes);
-      }
-    }
-    await stopSession();
-    router.back();
+  const handleBeatChange = (value: number) => {
+    setBeatFreq(value);
+    updateAudioSettings?.({ beatFrequency: value });
   };
 
-  if (!currentSession) return null;
+  const handleVolumeChange = (value: number) => {
+    setVolume(value);
+    updateAudioSettings?.({ volume: value });
+  };
+
+  const handleWaveformChange = (waveform: typeof WAVEFORMS[number]['value']) => {
+    updateAudioSettings?.({ waveform });
+  };
+
+  const handleModeChange = (mode: typeof MODES[number]['value']) => {
+    updateAudioSettings?.({ mode });
+  };
+
+  if (!currentSession) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#191121]">
+        <Text className="text-white text-lg">No session playing</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="mt-4 px-6 py-3 bg-[#B388FF] rounded-full"
+        >
+          <Text className="text-white font-semibold">Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1">
@@ -77,106 +80,152 @@ export default function NowPlayingScreen() {
         style={{ flex: 1 }}
         resizeMode="cover"
       >
-        <View className="absolute inset-0 bg-[#191121]/50" />
+        <View className="absolute inset-0 bg-[#191121]/70" />
         <SafeAreaView className="flex-1">
-          <View className="flex-row justify-between items-center px-6 py-4">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="p-2"
-            >
-              <ChevronDown size={28} color="white" />
-            </TouchableOpacity>
-            <Text className="text-lg font-bold text-white">{currentSession.title}</Text>
-            <TouchableOpacity
-              onPress={handleEnd}
-              className="p-2"
-            >
-              <Text className="text-base font-bold text-white/80">End</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="flex-1 items-center justify-center px-6 pb-20">
-            {/* Waveform Visualization */}
-            <View className="w-full max-w-sm aspect-square items-center justify-center mb-8">
-              <ImageBackground
-                source={{ uri: WAVEFORM_BG }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="contain"
+          <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View className="flex-row items-center py-4">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="p-2 rounded-full bg-white/10"
               >
-                <View className="absolute inset-0 bg-black/20" />
-              </ImageBackground>
+                <ArrowLeft size={24} color="white" />
+              </TouchableOpacity>
+              <Text className="flex-1 text-center text-xl font-bold text-white pr-10">
+                Now Playing
+              </Text>
             </View>
 
-            {/* Play/Pause Button with Progress Ring */}
-            <View className="relative items-center justify-center mb-8">
-              <Svg width={96} height={96} className="absolute">
-                <Circle
-                  cx="48"
-                  cy="48"
-                  r="48"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.1)"
-                  strokeWidth="4"
-                />
-                <Circle
-                  cx="48"
-                  cy="48"
-                  r="48"
-                  fill="none"
-                  stroke="#FCD34D"
-                  strokeWidth="4"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  transform="rotate(-90 48 48)"
-                />
-              </Svg>
+            {/* Session Info */}
+            <View className="items-center py-8">
+              <View className="w-48 h-48 rounded-3xl bg-gradient-to-br from-purple-500 to-blue-500 items-center justify-center mb-6">
+                <Text className="text-6xl">🎵</Text>
+              </View>
+              <Text className="text-2xl font-bold text-white mb-2">{currentSession.title}</Text>
+              <Text className="text-white/60">{currentSession.subtitle}</Text>
+            </View>
+
+            {/* Play/Pause Button */}
+            <View className="items-center mb-8">
               <TouchableOpacity
                 onPress={togglePlayback}
-                className="w-20 h-20 rounded-full items-center justify-center"
-                style={{
-                  backgroundColor: '#FCD34D',
-                  shadowColor: '#FCD34D',
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 20,
-                  elevation: 10,
-                }}
+                className="w-20 h-20 rounded-full bg-[#B388FF] items-center justify-center"
+                activeOpacity={0.8}
               >
                 {isPlaying ? (
-                  <Pause size={40} color="black" fill="black" />
+                  <Pause size={32} color="white" fill="white" />
                 ) : (
-                  <Play size={40} color="black" fill="black" />
+                  <Play size={32} color="white" fill="white" />
                 )}
               </TouchableOpacity>
             </View>
 
-            {/* Volume Control - Hidden for now, can be shown on long press */}
-            {false && showVolume && (
-              <View className="absolute right-6 top-1/3 items-center gap-3">
-                <Volume2 size={20} color="rgba(255,255,255,0.5)" />
-                <View className="h-24 w-1 rounded-full bg-white/10">
-                  <View
-                    className="w-full rounded-full"
-                    style={{
-                      height: `${volume * 100}%`,
-                      backgroundColor: '#FCD34D',
-                    }}
-                  />
-                </View>
-                <Volume1 size={20} color="rgba(255,255,255,0.5)" />
+            {/* Audio Mode Selection */}
+            <View className="mb-6">
+              <Text className="text-white font-semibold mb-3">Mode</Text>
+              <View className="flex-row gap-3">
+                {MODES.map((mode) => (
+                  <TouchableOpacity
+                    key={mode.value}
+                    onPress={() => handleModeChange(mode.value)}
+                    className={`flex-1 p-4 rounded-2xl ${audioSettings?.mode === mode.value
+                        ? 'bg-[#B388FF]'
+                        : 'bg-white/5'
+                      }`}
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-white font-semibold text-center">{mode.label}</Text>
+                    <Text className="text-white/50 text-xs text-center mt-1">{mode.description}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            )}
-          </View>
+            </View>
 
-          {/* Bottom Info */}
-          <View className="flex-row justify-between items-center px-6 pb-4">
-            <Text className="text-base font-medium text-white/90">{currentSession.subtitle}</Text>
-            <Text className="text-sm text-white/70">{formatTime(timeLeft)} left</Text>
-          </View>
+            {/* Waveform Selection */}
+            <View className="mb-6">
+              <Text className="text-white font-semibold mb-3">Waveform</Text>
+              <View className="flex-row gap-2">
+                {WAVEFORMS.map((wf) => (
+                  <TouchableOpacity
+                    key={wf.value}
+                    onPress={() => handleWaveformChange(wf.value)}
+                    className={`flex-1 p-3 rounded-xl ${audioSettings?.waveform === wf.value
+                        ? 'bg-[#B388FF]'
+                        : 'bg-white/5'
+                      }`}
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-white text-2xl text-center">{wf.icon}</Text>
+                    <Text className="text-white text-xs text-center mt-1">{wf.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Carrier Frequency */}
+            <View className="mb-6">
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-white font-semibold">Carrier Frequency</Text>
+                <Text className="text-[#B388FF] font-mono">{carrierFreq.toFixed(3)} Hz</Text>
+              </View>
+              <Slider
+                value={carrierFreq}
+                onValueChange={handleCarrierChange}
+                minimumValue={1}
+                maximumValue={1000}
+                step={0.001}
+                minimumTrackTintColor="#B388FF"
+                maximumTrackTintColor="rgba(255,255,255,0.2)"
+                thumbTintColor="#B388FF"
+              />
+            </View>
+
+            {/* Beat Frequency */}
+            <View className="mb-6">
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-white font-semibold">
+                  {audioSettings?.mode === 'binaural' ? 'Beat' : 'Pulse'} Frequency
+                </Text>
+                <Text className="text-[#B388FF] font-mono">{beatFreq.toFixed(3)} Hz</Text>
+              </View>
+              <Slider
+                value={beatFreq}
+                onValueChange={handleBeatChange}
+                minimumValue={0.1}
+                maximumValue={40}
+                step={0.001}
+                minimumTrackTintColor="#B388FF"
+                maximumTrackTintColor="rgba(255,255,255,0.2)"
+                thumbTintColor="#B388FF"
+              />
+            </View>
+
+            {/* Volume Control */}
+            <View className="mb-8">
+              <View className="flex-row justify-between mb-2">
+                <View className="flex-row items-center gap-2">
+                  <Volume2 size={20} color="white" />
+                  <Text className="text-white font-semibold">Volume</Text>
+                </View>
+                <Text className="text-[#B388FF]">{Math.round(volume * 100)}%</Text>
+              </View>
+              <Slider
+                value={volume}
+                onValueChange={handleVolumeChange}
+                minimumValue={0}
+                maximumValue={1}
+                step={0.01}
+                minimumTrackTintColor="#B388FF"
+                maximumTrackTintColor="rgba(255,255,255,0.2)"
+                thumbTintColor="#B388FF"
+              />
+            </View>
+
+            {/* Spacer for bottom padding */}
+            <View className="h-24" />
+          </ScrollView>
         </SafeAreaView>
       </ImageBackground>
     </View>
   );
 }
-
