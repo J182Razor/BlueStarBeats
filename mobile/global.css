@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Utilities for Gradients (NativeWind handles this differently, but we can define classes) */
