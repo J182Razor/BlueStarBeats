@@ -27,13 +27,35 @@ export class ReactNativeAudioEngine {
     };
 
     constructor() {
+        // #region agent log
+        const platform = Platform.OS;
+        fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:29',message:'ReactNativeAudioEngine constructor',data:{platform},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         if (Platform.OS === 'web') {
+            // #region agent log
+            const webInitStart = Date.now();
+            // #endregion
             // Use Web Audio API on web platform
-            const { audioEngine } = require('./audioEngineWeb');
-            this.audioEngine = audioEngine;
-            this.audioEngine.initAudioContext();
+            try {
+                const { audioEngine } = require('./audioEngineWeb');
+                this.audioEngine = audioEngine;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:35',message:'Web audioEngine module loaded',data:{hasEngine:!!this.audioEngine},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+                this.audioEngine.initAudioContext();
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:37',message:'Web AudioContext initAudioContext called',data:{initTime:Date.now()-webInitStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion
+            } catch (error) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:40',message:'Web audioEngine initialization error',data:{error:error instanceof Error?error.message:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+            }
         } else {
             // For native platforms, we'll use a simpler approach
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:45',message:'Native platform detected - audio not implemented',data:{platform},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             console.warn('Native audio synthesis not yet implemented');
         }
     }

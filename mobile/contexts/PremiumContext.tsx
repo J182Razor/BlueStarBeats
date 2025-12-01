@@ -22,16 +22,32 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [subscriptionTier, setSubscriptionTierState] = useState<SubscriptionTier>('free');
 
   useEffect(() => {
+    // #region agent log
+    const premiumStart = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:24',message:'PremiumContext useEffect started',data:{timestamp:premiumStart},timestamp:premiumStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     loadSubscriptionTier();
   }, []);
 
   const loadSubscriptionTier = async () => {
+    // #region agent log
+    const asyncStart = Date.now();
+    // #endregion
     try {
       const saved = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:30',message:'PremiumContext AsyncStorage read completed',data:{asyncTime:Date.now()-asyncStart,hasData:!!saved},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       if (saved && ['free', 'monthly', 'annual', 'lifetime'].includes(saved)) {
         setSubscriptionTierState(saved as SubscriptionTier);
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:35',message:'PremiumContext loadSubscriptionTier complete',data:{totalTime:Date.now()-asyncStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:37',message:'PremiumContext loadSubscriptionTier error',data:{error:error instanceof Error?error.message:String(error),totalTime:Date.now()-asyncStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error('Failed to load subscription tier:', error);
     }
   };

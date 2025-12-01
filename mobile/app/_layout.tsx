@@ -6,6 +6,9 @@ import { PremiumProvider } from '../contexts/PremiumContext';
 import "../global.css";
 
 export default function Layout() {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_layout.tsx:9',message:'Layout component rendering',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   return (
     <PremiumProvider>
       <ProgressProvider>

@@ -40,9 +40,19 @@ let compressor: DynamicsCompressorNode | null = null;
 
 // Initialize the audio context with high sample rate
 const initAudioContext = (): void => {
+  // #region agent log
+  const initStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:42',message:'initAudioContext called',data:{timestamp:initStart},timestamp:initStart,sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   try {
+    // #region agent log
+    const audioContextStart = Date.now();
+    // #endregion
     // Use higher sample rate for better quality
     audioContext = new AudioContext({ sampleRate: 48000 });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:46',message:'AudioContext created',data:{state:audioContext.state,sampleRate:audioContext.sampleRate,createTime:Date.now()-audioContextStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     
     // Create analyzer for visualization
     analyserNode = audioContext.createAnalyser();
@@ -80,7 +90,13 @@ const initAudioContext = (): void => {
     analyserNode.connect(audioContext.destination);
     
     console.log('Audio context initialized with sample rate:', audioContext.sampleRate);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:82',message:'AudioContext initialization complete',data:{totalTime:Date.now()-initStart,state:audioContext.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:85',message:'AudioContext initialization failed',data:{error:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:'Unknown',totalTime:Date.now()-initStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     console.error('Failed to initialize audio context:', error);
   }
 };

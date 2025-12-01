@@ -29,9 +29,28 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const audioEngineRef = useRef<ReactNativeAudioEngine | null>(null);
 
   useEffect(() => {
+    // #region agent log
+    const initStartTime = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:31',message:'AudioContext useEffect started',data:{timestamp:initStartTime},timestamp:initStartTime,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     // Initialize audio engine
-    const { getAudioEngine } = require('../lib/audioEngine');
-    audioEngineRef.current = getAudioEngine();
+    try {
+      // #region agent log
+      const requireStartTime = Date.now();
+      // #endregion
+      const { getAudioEngine } = require('../lib/audioEngine');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:35',message:'AudioEngine module required',data:{requireTime:Date.now()-requireStartTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      audioEngineRef.current = getAudioEngine();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:37',message:'AudioEngine instance created',data:{hasEngine:!!audioEngineRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:40',message:'AudioEngine initialization error',data:{error:error instanceof Error?error.message:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    }
 
     // Set initial audio settings
     setAudioSettings({
@@ -41,6 +60,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       mode: 'binaural',
       volume: 0.7
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:50',message:'AudioContext initialization complete',data:{initTime:Date.now()-initStartTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     return () => {
       // Cleanup on unmount

@@ -11,6 +11,10 @@ import { getSessionsByCategory } from '../lib/sessions';
 const GALAXY_BG = 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?auto=format&fit=crop&q=80&w=2000';
 
 export default function HomeScreen() {
+  // #region agent log
+  const renderStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.tsx:13',message:'HomeScreen render started',data:{timestamp:renderStart},timestamp:renderStart,sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const router = useRouter();
   const { startSession, currentSession } = useAudio();
 
@@ -56,12 +60,31 @@ export default function HomeScreen() {
     }
   };
 
+    // #region agent log
+    const imageLoadStart = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.tsx:59',message:'HomeScreen render before ImageBackground',data:{renderTime:Date.now()-renderStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return (
         <View className="flex-1">
       <ImageBackground
         source={{ uri: GALAXY_BG }}
         style={{ flex: 1 }}
         resizeMode="cover"
+        onLoadStart={() => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.tsx:64',message:'ImageBackground load started',data:{loadTime:Date.now()-imageLoadStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+        }}
+        onLoadEnd={() => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.tsx:68',message:'ImageBackground load completed',data:{totalLoadTime:Date.now()-imageLoadStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+        }}
+        onError={(error) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.tsx:72',message:'ImageBackground load error',data:{error:error.nativeEvent?.error||'Unknown error',loadTime:Date.now()-imageLoadStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+        }}
       >
         <View className="absolute inset-0 bg-[#191121]/60" />
             <SafeAreaView className="flex-1">

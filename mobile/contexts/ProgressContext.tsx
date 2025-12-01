@@ -50,15 +50,25 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [recentActivity, setRecentActivity] = useState<SessionHistory[]>([]);
 
   useEffect(() => {
+    // #region agent log
+    const loadStart = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:52',message:'ProgressContext useEffect started',data:{timestamp:loadStart},timestamp:loadStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     loadData();
   }, []);
 
   const loadData = async () => {
+    // #region agent log
+    const asyncStart = Date.now();
+    // #endregion
     try {
       const [historyData, statsData] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.SESSION_HISTORY).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.STATS).catch(() => null),
       ]);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:60',message:'AsyncStorage reads completed',data:{asyncTime:Date.now()-asyncStart,hasHistory:!!historyData,hasStats:!!statsData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
 
       if (historyData) {
         try {
@@ -85,7 +95,13 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.error('Failed to parse stats data:', parseError);
         }
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:91',message:'ProgressContext loadData complete',data:{totalTime:Date.now()-asyncStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:93',message:'ProgressContext loadData error',data:{error:error instanceof Error?error.message:String(error),totalTime:Date.now()-asyncStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error('Failed to load progress data:', error);
     }
   };
