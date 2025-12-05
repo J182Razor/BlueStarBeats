@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+    ImageBackground,
+    TextInput,
+    Animated,
+    Easing,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Pause, Volume2, Waves } from 'lucide-react-native';
 import { useAudio } from '../../contexts/AudioContext';
 import Slider from '@react-native-community/slider';
 
-const GALAXY_BG = 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=2000';
+const GALAXY_BG =
+    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=2000';
 
 const WAVEFORMS = [
     { value: 'sine', label: 'Sine', icon: '~' },
@@ -27,6 +37,223 @@ const PRESETS = [
     { name: 'Meditation', carrier: 150, beat: 6, description: 'Theta waves' },
     { name: 'Creativity', carrier: 300, beat: 7, description: 'Theta/Alpha border' },
 ];
+
+// Frequency Visualizer Component
+const FrequencyVisualizer = ({
+    carrierFreq,
+    beatFreq,
+    isPlaying,
+}: {
+    carrierFreq: number;
+    beatFreq: number;
+    isPlaying: boolean;
+}) => {
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (isPlaying) {
+            // Pulse animation based on beat frequency
+            const pulseDuration = beatFreq > 0 ? 1000 / beatFreq : 1000;
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, {
+                        toValue: 1.15,
+                        duration: pulseDuration / 2,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pulseAnim, {
+                        toValue: 1,
+                        duration: pulseDuration / 2,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                ])
+            ).start();
+
+            // Rotation based on carrier frequency
+            Animated.loop(
+                Animated.timing(rotateAnim, {
+                    toValue: 1,
+                    duration: Math.max(1000, 10000 / Math.max(carrierFreq / 100, 1)),
+                    easing: Easing.linear,
+                    useNativeDriver: true,
+                })
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+            rotateAnim.setValue(0);
+        }
+
+        return () => {
+            pulseAnim.stopAnimation();
+            rotateAnim.stopAnimation();
+        };
+    }, [isPlaying, beatFreq, carrierFreq]);
+
+    const rotation = rotateAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg'],
+    });
+
+    return (
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <Animated.View
+                style={{
+                    width: 180,
+                    height: 180,
+                    borderRadius: 90,
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: [{ scale: pulseAnim }, { rotate: rotation }],
+                }}
+            >
+                {/* Outer ring */}
+                <View
+                    style={{
+                        position: 'absolute',
+                        width: 180,
+                        height: 180,
+                        borderRadius: 90,
+                        borderWidth: 2,
+                        borderColor: isPlaying ? '#6366f1' : 'rgba(99, 102, 241, 0.3)',
+                    }}
+                />
+                {/* Middle ring */}
+                <View
+                    style={{
+                        position: 'absolute',
+                        width: 140,
+                        height: 140,
+                        borderRadius: 70,
+                        borderWidth: 2,
+                        borderColor: isPlaying ? '#a78bfa' : 'rgba(167, 139, 250, 0.3)',
+                    }}
+                />
+                {/* Inner ring */}
+                <View
+                    style={{
+                        position: 'absolute',
+                        width: 100,
+                        height: 100,
+                        borderRadius: 50,
+                        borderWidth: 2,
+                        borderColor: isPlaying ? '#818cf8' : 'rgba(129, 140, 248, 0.3)',
+                    }}
+                />
+                {/* Center */}
+                <View
+                    style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 30,
+                        backgroundColor: isPlaying ? '#6366f1' : 'rgba(99, 102, 241, 0.5)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Waves size={24} color="white" />
+                </View>
+            </Animated.View>
+            {/* Frequency labels */}
+            <View style={{ flexDirection: 'row', marginTop: 16, gap: 24 }}>
+                <View style={{ alignItems: 'center' }}>
+                    <Text style={{ color: '#6366f1', fontSize: 20, fontWeight: 'bold' }}>
+                        {carrierFreq.toFixed(2)}
+                    </Text>
+                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11 }}>Carrier Hz</Text>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                    <Text style={{ color: '#a78bfa', fontSize: 20, fontWeight: 'bold' }}>
+                        {beatFreq.toFixed(2)}
+                    </Text>
+                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11 }}>Beat Hz</Text>
+                </View>
+            </View>
+        </View>
+    );
+};
+
+// Number Input Component
+const FrequencyInput = ({
+    label,
+    value,
+    onChange,
+    color = '#6366f1',
+}: {
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+    color?: string;
+}) => {
+    const [inputValue, setInputValue] = useState(value.toFixed(3));
+
+    useEffect(() => {
+        setInputValue(value.toFixed(3));
+    }, [value]);
+
+    const handleChangeText = (text: string) => {
+        // Allow only numbers and one decimal point
+        const cleaned = text.replace(/[^0-9.]/g, '');
+        const parts = cleaned.split('.');
+        const formatted = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+        setInputValue(formatted);
+    };
+
+    const handleBlur = () => {
+        const num = parseFloat(inputValue);
+        if (!isNaN(num) && num >= 0 && num <= 99999.999) {
+            onChange(num);
+        } else {
+            setInputValue(value.toFixed(3));
+        }
+    };
+
+    return (
+        <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>{label}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <TextInput
+                    style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 12,
+                        padding: 12,
+                        color: 'white',
+                        fontSize: 18,
+                        fontFamily: 'monospace',
+                        borderWidth: 1,
+                        borderColor: color,
+                    }}
+                    value={inputValue}
+                    onChangeText={handleChangeText}
+                    onBlur={handleBlur}
+                    keyboardType="decimal-pad"
+                    placeholder="0.000"
+                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                />
+                <Text style={{ color: color, fontWeight: '600' }}>Hz</Text>
+            </View>
+            <Slider
+                style={{ marginTop: 8 }}
+                value={value}
+                onValueChange={onChange}
+                minimumValue={0}
+                maximumValue={99999.999}
+                step={0.001}
+                minimumTrackTintColor={color}
+                maximumTrackTintColor="rgba(255,255,255,0.2)"
+                thumbTintColor={color}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>0.000 Hz</Text>
+                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>99999.999 Hz</Text>
+            </View>
+        </View>
+    );
+};
 
 export default function PlayerScreen() {
     const { isPlaying, togglePlayback, audioSettings, updateAudioSettings } = useAudio();
@@ -102,33 +329,30 @@ export default function PlayerScreen() {
                     <ScrollView
                         style={{ flex: 1, paddingHorizontal: 16 }}
                         showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
                     >
                         {/* Header */}
-                        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-                            <Waves size={32} color="#6366f1" />
-                            <Text
-                                style={{
-                                    fontSize: 24,
-                                    fontWeight: 'bold',
-                                    color: 'white',
-                                    marginTop: 8,
-                                }}
-                            >
+                        <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                            <Text style={{ fontSize: 22, fontWeight: 'bold', color: 'white' }}>
                                 Brainwave Entrainment
-                            </Text>
-                            <Text style={{ color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
-                                Precision frequency control
                             </Text>
                         </View>
 
+                        {/* Frequency Visualizer */}
+                        <FrequencyVisualizer
+                            carrierFreq={carrierFreq}
+                            beatFreq={beatFreq}
+                            isPlaying={isPlaying}
+                        />
+
                         {/* Play/Pause Button */}
-                        <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                        <View style={{ alignItems: 'center', marginBottom: 20 }}>
                             <TouchableOpacity
                                 onPress={togglePlayback}
                                 style={{
-                                    width: 80,
-                                    height: 80,
-                                    borderRadius: 40,
+                                    width: 72,
+                                    height: 72,
+                                    borderRadius: 36,
                                     backgroundColor: isPlaying ? '#ef4444' : '#6366f1',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -136,63 +360,30 @@ export default function PlayerScreen() {
                                 activeOpacity={0.8}
                             >
                                 {isPlaying ? (
-                                    <Pause size={32} color="white" fill="white" />
+                                    <Pause size={28} color="white" fill="white" />
                                 ) : (
-                                    <Play size={32} color="white" fill="white" />
+                                    <Play size={28} color="white" fill="white" />
                                 )}
                             </TouchableOpacity>
-                            <Text style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: 8 }}>
+                            <Text style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: 8, fontSize: 12 }}>
                                 {isPlaying ? 'Playing' : 'Tap to Start'}
                             </Text>
                         </View>
 
-                        {/* Frequency Display */}
-                        <View
-                            style={{
-                                backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                                borderRadius: 16,
-                                padding: 16,
-                                marginBottom: 20,
-                                borderWidth: 1,
-                                borderColor: 'rgba(99, 102, 241, 0.3)',
-                            }}
-                        >
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                                <View style={{ alignItems: 'center' }}>
-                                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
-                                        Carrier
-                                    </Text>
-                                    <Text style={{ color: '#6366f1', fontSize: 24, fontWeight: 'bold' }}>
-                                        {carrierFreq.toFixed(0)}
-                                    </Text>
-                                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>Hz</Text>
-                                </View>
-                                <View style={{ alignItems: 'center' }}>
-                                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
-                                        {selectedMode === 'binaural' ? 'Beat' : 'Pulse'}
-                                    </Text>
-                                    <Text style={{ color: '#a78bfa', fontSize: 24, fontWeight: 'bold' }}>
-                                        {beatFreq.toFixed(0)}
-                                    </Text>
-                                    <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>Hz</Text>
-                                </View>
-                            </View>
-                        </View>
-
                         {/* Mode Selection */}
-                        <View style={{ marginBottom: 20 }}>
-                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
+                        <View style={{ marginBottom: 16 }}>
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8, fontSize: 14 }}>
                                 Mode
                             </Text>
-                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
                                 {MODES.map((m) => (
                                     <TouchableOpacity
                                         key={m.value}
                                         onPress={() => handleModeChange(m.value)}
                                         style={{
                                             flex: 1,
-                                            padding: 16,
-                                            borderRadius: 16,
+                                            padding: 12,
+                                            borderRadius: 12,
                                             backgroundColor:
                                                 selectedMode === m.value
                                                     ? 'rgba(99, 102, 241, 0.3)'
@@ -206,35 +397,25 @@ export default function PlayerScreen() {
                                         <Text style={{ color: 'white', fontWeight: '600', textAlign: 'center' }}>
                                             {m.label}
                                         </Text>
-                                        <Text
-                                            style={{
-                                                color: 'rgba(255, 255, 255, 0.4)',
-                                                fontSize: 11,
-                                                textAlign: 'center',
-                                                marginTop: 4,
-                                            }}
-                                        >
-                                            {m.description}
-                                        </Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
                         {/* Waveform Selection */}
-                        <View style={{ marginBottom: 20 }}>
-                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
+                        <View style={{ marginBottom: 16 }}>
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8, fontSize: 14 }}>
                                 Waveform
                             </Text>
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
                                 {WAVEFORMS.map((wf) => (
                                     <TouchableOpacity
                                         key={wf.value}
                                         onPress={() => handleWaveformChange(wf.value)}
                                         style={{
                                             flex: 1,
-                                            padding: 12,
-                                            borderRadius: 12,
+                                            padding: 10,
+                                            borderRadius: 10,
                                             backgroundColor:
                                                 selectedWaveform === wf.value
                                                     ? 'rgba(99, 102, 241, 0.3)'
@@ -246,74 +427,36 @@ export default function PlayerScreen() {
                                         }}
                                         activeOpacity={0.7}
                                     >
-                                        <Text style={{ color: 'white', fontSize: 20 }}>{wf.icon}</Text>
-                                        <Text style={{ color: 'white', fontSize: 11, marginTop: 4 }}>{wf.label}</Text>
+                                        <Text style={{ color: 'white', fontSize: 18 }}>{wf.icon}</Text>
+                                        <Text style={{ color: 'white', fontSize: 10, marginTop: 2 }}>{wf.label}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
-                        {/* Carrier Frequency Slider */}
-                        <View style={{ marginBottom: 16 }}>
-                            <View
-                                style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}
-                            >
-                                <Text style={{ color: 'white', fontWeight: '600' }}>Carrier Frequency</Text>
-                                <Text style={{ color: '#6366f1', fontFamily: 'monospace' }}>
-                                    {carrierFreq.toFixed(0)} Hz
-                                </Text>
-                            </View>
-                            <Slider
-                                value={carrierFreq}
-                                onValueChange={handleCarrierChange}
-                                minimumValue={0}
-                                maximumValue={99999}
-                                step={1}
-                                minimumTrackTintColor="#6366f1"
-                                maximumTrackTintColor="rgba(255,255,255,0.2)"
-                                thumbTintColor="#6366f1"
-                            />
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>0 Hz</Text>
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>99999 Hz</Text>
-                            </View>
-                        </View>
+                        {/* Carrier Frequency Input */}
+                        <FrequencyInput
+                            label="Carrier Frequency"
+                            value={carrierFreq}
+                            onChange={handleCarrierChange}
+                            color="#6366f1"
+                        />
 
-                        {/* Beat Frequency Slider */}
-                        <View style={{ marginBottom: 16 }}>
-                            <View
-                                style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}
-                            >
-                                <Text style={{ color: 'white', fontWeight: '600' }}>
-                                    {selectedMode === 'binaural' ? 'Beat' : 'Pulse'} Frequency
-                                </Text>
-                                <Text style={{ color: '#a78bfa', fontFamily: 'monospace' }}>
-                                    {beatFreq.toFixed(0)} Hz
-                                </Text>
-                            </View>
-                            <Slider
-                                value={beatFreq}
-                                onValueChange={handleBeatChange}
-                                minimumValue={0}
-                                maximumValue={99999}
-                                step={1}
-                                minimumTrackTintColor="#a78bfa"
-                                maximumTrackTintColor="rgba(255,255,255,0.2)"
-                                thumbTintColor="#a78bfa"
-                            />
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>0 Hz</Text>
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>99999 Hz</Text>
-                            </View>
-                        </View>
+                        {/* Beat Frequency Input */}
+                        <FrequencyInput
+                            label={selectedMode === 'binaural' ? 'Beat Frequency' : 'Pulse Frequency'}
+                            value={beatFreq}
+                            onChange={handleBeatChange}
+                            color="#a78bfa"
+                        />
 
                         {/* Volume Control */}
-                        <View style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 16 }}>
                             <View
                                 style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}
                             >
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                    <Volume2 size={18} color="white" />
+                                    <Volume2 size={16} color="white" />
                                     <Text style={{ color: 'white', fontWeight: '600' }}>Volume</Text>
                                 </View>
                                 <Text style={{ color: '#6366f1' }}>{Math.round(volume * 100)}%</Text>
@@ -332,7 +475,7 @@ export default function PlayerScreen() {
 
                         {/* Presets */}
                         <View style={{ marginBottom: 32 }}>
-                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 10, fontSize: 14 }}>
                                 Quick Presets
                             </Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -341,18 +484,17 @@ export default function PlayerScreen() {
                                         key={preset.name}
                                         onPress={() => handlePresetSelect(preset)}
                                         style={{
-                                            paddingHorizontal: 16,
-                                            paddingVertical: 10,
-                                            borderRadius: 20,
+                                            paddingHorizontal: 14,
+                                            paddingVertical: 8,
+                                            borderRadius: 16,
                                             backgroundColor: 'rgba(255, 255, 255, 0.05)',
                                             borderWidth: 1,
                                             borderColor: 'rgba(255, 255, 255, 0.1)',
                                         }}
                                         activeOpacity={0.7}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: '500' }}>{preset.name}</Text>
-                                        <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>
-                                            {preset.description}
+                                        <Text style={{ color: 'white', fontWeight: '500', fontSize: 13 }}>
+                                            {preset.name}
                                         </Text>
                                     </TouchableOpacity>
                                 ))}
