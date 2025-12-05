@@ -157,18 +157,13 @@ export default function PlayerScreen() {
                                 borderColor: 'rgba(99, 102, 241, 0.3)',
                             }}
                         >
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-around',
-                                }}
-                            >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                                 <View style={{ alignItems: 'center' }}>
                                     <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
                                         Carrier
                                     </Text>
                                     <Text style={{ color: '#6366f1', fontSize: 24, fontWeight: 'bold' }}>
-                                        {carrierFreq.toFixed(1)}
+                                        {carrierFreq.toFixed(0)}
                                     </Text>
                                     <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>Hz</Text>
                                 </View>
@@ -177,7 +172,7 @@ export default function PlayerScreen() {
                                         {selectedMode === 'binaural' ? 'Beat' : 'Pulse'}
                                     </Text>
                                     <Text style={{ color: '#a78bfa', fontSize: 24, fontWeight: 'bold' }}>
-                                        {beatFreq.toFixed(2)}
+                                        {beatFreq.toFixed(0)}
                                     </Text>
                                     <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>Hz</Text>
                                 </View>
@@ -186,9 +181,7 @@ export default function PlayerScreen() {
 
                         {/* Mode Selection */}
                         <View style={{ marginBottom: 20 }}>
-                            <Text
-                                style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}
-                            >
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
                                 Mode
                             </Text>
                             <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -210,13 +203,7 @@ export default function PlayerScreen() {
                                         }}
                                         activeOpacity={0.7}
                                     >
-                                        <Text
-                                            style={{
-                                                color: 'white',
-                                                fontWeight: '600',
-                                                textAlign: 'center',
-                                            }}
-                                        >
+                                        <Text style={{ color: 'white', fontWeight: '600', textAlign: 'center' }}>
                                             {m.label}
                                         </Text>
                                         <Text
@@ -236,9 +223,7 @@ export default function PlayerScreen() {
 
                         {/* Waveform Selection */}
                         <View style={{ marginBottom: 20 }}>
-                            <Text
-                                style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}
-                            >
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
                                 Waveform
                             </Text>
                             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -262,9 +247,7 @@ export default function PlayerScreen() {
                                         activeOpacity={0.7}
                                     >
                                         <Text style={{ color: 'white', fontSize: 20 }}>{wf.icon}</Text>
-                                        <Text style={{ color: 'white', fontSize: 11, marginTop: 4 }}>
-                                            {wf.label}
-                                        </Text>
+                                        <Text style={{ color: 'white', fontSize: 11, marginTop: 4 }}>{wf.label}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -277,19 +260,23 @@ export default function PlayerScreen() {
                             >
                                 <Text style={{ color: 'white', fontWeight: '600' }}>Carrier Frequency</Text>
                                 <Text style={{ color: '#6366f1', fontFamily: 'monospace' }}>
-                                    {carrierFreq.toFixed(1)} Hz
+                                    {carrierFreq.toFixed(0)} Hz
                                 </Text>
                             </View>
                             <Slider
                                 value={carrierFreq}
                                 onValueChange={handleCarrierChange}
-                                minimumValue={20}
-                                maximumValue={1000}
-                                step={0.1}
+                                minimumValue={0}
+                                maximumValue={99999}
+                                step={1}
                                 minimumTrackTintColor="#6366f1"
                                 maximumTrackTintColor="rgba(255,255,255,0.2)"
                                 thumbTintColor="#6366f1"
                             />
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>0 Hz</Text>
+                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>99999 Hz</Text>
+                            </View>
                         </View>
 
                         {/* Beat Frequency Slider */}
@@ -301,28 +288,22 @@ export default function PlayerScreen() {
                                     {selectedMode === 'binaural' ? 'Beat' : 'Pulse'} Frequency
                                 </Text>
                                 <Text style={{ color: '#a78bfa', fontFamily: 'monospace' }}>
-                                    {beatFreq.toFixed(2)} Hz
+                                    {beatFreq.toFixed(0)} Hz
                                 </Text>
                             </View>
                             <Slider
                                 value={beatFreq}
                                 onValueChange={handleBeatChange}
-                                minimumValue={0.5}
-                                maximumValue={40}
-                                step={0.01}
+                                minimumValue={0}
+                                maximumValue={99999}
+                                step={1}
                                 minimumTrackTintColor="#a78bfa"
                                 maximumTrackTintColor="rgba(255,255,255,0.2)"
                                 thumbTintColor="#a78bfa"
                             />
-                            <View
-                                style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}
-                            >
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>
-                                    Delta (0.5-4Hz)
-                                </Text>
-                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>
-                                    Gamma (40Hz)
-                                </Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>0 Hz</Text>
+                                <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}>99999 Hz</Text>
                             </View>
                         </View>
 
@@ -351,9 +332,7 @@ export default function PlayerScreen() {
 
                         {/* Presets */}
                         <View style={{ marginBottom: 32 }}>
-                            <Text
-                                style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}
-                            >
+                            <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12, fontSize: 16 }}>
                                 Quick Presets
                             </Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

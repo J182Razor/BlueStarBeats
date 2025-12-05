@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useAudio } from '../../contexts/AudioContext';
 import { getSessionsByCategory } from '../../lib/sessions';
 
-const GALAXY_BG = 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?auto=format&fit=crop&q=80&w=2000';
+const GALAXY_BG = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=2000';
 
 export default function HomeScreen() {
   const router = useRouter();
