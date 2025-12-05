@@ -7,7 +7,11 @@ import "../global.css";
 
 export default function Layout() {
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_layout.tsx:9',message:'Layout component rendering',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  const layoutStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_layout.tsx:9',message:'Layout component rendering',data:{timestamp:layoutStart},timestamp:layoutStart,sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  // #region agent log
+  const providerStart = Date.now();
   // #endregion
   return (
     <PremiumProvider>
@@ -90,4 +94,7 @@ export default function Layout() {
       </ProgressProvider>
     </PremiumProvider>
   );
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_layout.tsx:92',message:'Layout component JSX returned',data:{renderTime:Date.now()-layoutStart,providerSetupTime:Date.now()-providerStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
 }

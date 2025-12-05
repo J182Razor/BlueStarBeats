@@ -19,12 +19,16 @@ const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 const STORAGE_KEY = '@bluestarbeats:subscription_tier';
 
 export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // #region agent log
+  const providerMountStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:22',message:'PremiumProvider component mounting',data:{timestamp:providerMountStart},timestamp:providerMountStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
   const [subscriptionTier, setSubscriptionTierState] = useState<SubscriptionTier>('free');
 
   useEffect(() => {
     // #region agent log
     const premiumStart = Date.now();
-    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:24',message:'PremiumContext useEffect started',data:{timestamp:premiumStart},timestamp:premiumStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PremiumContext.tsx:27',message:'PremiumContext useEffect started',data:{mountTime:premiumStart-providerMountStart},timestamp:premiumStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
     // #endregion
     loadSubscriptionTier();
   }, []);

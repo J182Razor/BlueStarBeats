@@ -22,6 +22,10 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // #region agent log
+  const providerMountStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:24',message:'AudioProvider component mounting',data:{timestamp:providerMountStart},timestamp:providerMountStart,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [volume, setVolumeState] = useState(0.7);
@@ -31,7 +35,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     // #region agent log
     const initStartTime = Date.now();
-    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:31',message:'AudioContext useEffect started',data:{timestamp:initStartTime},timestamp:initStartTime,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AudioContext.tsx:35',message:'AudioContext useEffect started',data:{mountTime:initStartTime-providerMountStart},timestamp:initStartTime,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     // Initialize audio engine
     try {

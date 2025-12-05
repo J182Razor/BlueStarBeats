@@ -117,8 +117,21 @@ export class ReactNativeAudioEngine {
 let engineInstance: ReactNativeAudioEngine | null = null;
 
 export function getAudioEngine(): ReactNativeAudioEngine {
+    // #region agent log
+    const getEngineStart = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:119',message:'getAudioEngine called',data:{hasInstance:!!engineInstance},timestamp:getEngineStart,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     if (!engineInstance) {
+        // #region agent log
+        const createStart = Date.now();
+        // #endregion
         engineInstance = new ReactNativeAudioEngine();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:123',message:'ReactNativeAudioEngine instance created',data:{createTime:Date.now()-createStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
     }
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:126',message:'getAudioEngine returning',data:{totalTime:Date.now()-getEngineStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     return engineInstance;
 }

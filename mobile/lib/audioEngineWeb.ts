@@ -51,9 +51,13 @@ const initAudioContext = (): void => {
     // Use higher sample rate for better quality
     audioContext = new AudioContext({ sampleRate: 48000 });
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:46',message:'AudioContext created',data:{state:audioContext.state,sampleRate:audioContext.sampleRate,createTime:Date.now()-audioContextStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    const audioContextCreated = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:52',message:'AudioContext created',data:{state:audioContext.state,sampleRate:audioContext.sampleRate,createTime:audioContextCreated-audioContextStart},timestamp:audioContextCreated,sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
     
+    // #region agent log
+    const nodeCreationStart = Date.now();
+    // #endregion
     // Create analyzer for visualization
     analyserNode = audioContext.createAnalyser();
     analyserNode.fftSize = 2048;
@@ -82,6 +86,11 @@ const initAudioContext = (): void => {
     compressor.attack.value = 0.003;
     compressor.release.value = 0.25;
     
+    // #region agent log
+    const nodeCreationEnd = Date.now();
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:78',message:'Audio nodes created',data:{nodeCreationTime:nodeCreationEnd-nodeCreationStart},timestamp:nodeCreationEnd,sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    
     // Connect the audio processing chain
     gainNode.connect(lowpassFilter);
     lowpassFilter.connect(highpassFilter);
@@ -91,7 +100,7 @@ const initAudioContext = (): void => {
     
     console.log('Audio context initialized with sample rate:', audioContext.sampleRate);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:82',message:'AudioContext initialization complete',data:{totalTime:Date.now()-initStart,state:audioContext.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngineWeb.ts:95',message:'AudioContext initialization complete',data:{totalTime:Date.now()-initStart,state:audioContext.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
   } catch (error) {
     // #region agent log

@@ -40,6 +40,10 @@ const STORAGE_KEYS = {
 };
 
 export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // #region agent log
+  const providerMountStart = Date.now();
+  fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:42',message:'ProgressProvider component mounting',data:{timestamp:providerMountStart},timestamp:providerMountStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
   const [stats, setStats] = useState<ProgressStats>({
     totalSessions: 0,
     totalTimeMeditated: 0,
@@ -52,7 +56,7 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     // #region agent log
     const loadStart = Date.now();
-    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:52',message:'ProgressContext useEffect started',data:{timestamp:loadStart},timestamp:loadStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/47fda163-483e-4af1-98c0-09ff88d0e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressContext.tsx:58',message:'ProgressContext useEffect started',data:{mountTime:loadStart-providerMountStart},timestamp:loadStart,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
     // #endregion
     loadData();
   }, []);
