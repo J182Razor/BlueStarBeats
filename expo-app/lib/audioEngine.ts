@@ -1,6 +1,6 @@
 /**
  * React Native Audio Engine
- * Provides binaural beats and isochronic tones generation
+ * Platform-agnostic wrapper for binaural beats and isochronic tones
  */
 
 import { Platform } from 'react-native';
@@ -18,6 +18,7 @@ export interface AudioSettings {
 
 export class ReactNativeAudioEngine {
     private audioEngine: any = null;
+    private isInitialized = false;
     private settings: AudioSettings = {
         carrierFrequency: 440,
         beatFrequency: 7.83,
@@ -27,28 +28,41 @@ export class ReactNativeAudioEngine {
     };
 
     constructor() {
-        if (Platform.OS === 'web') {
-            try {
+        this.initEngine();
+    }
+
+    private initEngine(): void {
+        if (this.isInitialized) return;
+
+        try {
+            if (Platform.OS === 'web') {
                 const { audioEngine } = require('./audioEngineWeb');
                 this.audioEngine = audioEngine;
                 this.audioEngine.initAudioContext();
-            } catch (error) {
-                console.warn('Web audio engine initialization failed:', error);
+            } else {
+                // Use native engine for iOS/Android
+                const { nativeAudioEngine } = require('./audioEngineNative');
+                this.audioEngine = nativeAudioEngine;
+                this.audioEngine.init();
             }
-        } else {
-            console.warn('Native audio synthesis not yet implemented');
+            this.isInitialized = true;
+        } catch (error) {
+            console.warn('Audio engine init failed:', error);
         }
     }
 
     async start(): Promise<void> {
+        if (!this.audioEngine) {
+            this.initEngine();
+        }
         if (this.audioEngine) {
-            this.audioEngine.start();
+            await this.audioEngine.start();
         }
     }
 
     async stop(): Promise<void> {
         if (this.audioEngine) {
-            this.audioEngine.stop();
+            await this.audioEngine.stop();
         }
     }
 
@@ -92,7 +106,7 @@ export class ReactNativeAudioEngine {
     }
 }
 
-// Singleton instance
+// Singleton
 let engineInstance: ReactNativeAudioEngine | null = null;
 
 export function getAudioEngine(): ReactNativeAudioEngine {
