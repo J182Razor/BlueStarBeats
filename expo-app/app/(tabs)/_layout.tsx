@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Library, User, Settings } from 'lucide-react-native';
+import { Home, Waves, Library, User } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -23,6 +23,13 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="player"
+        options={{
+          title: 'Player',
+          tabBarIcon: ({ color, size }) => <Waves size={size} color={color} />,
         }}
       />
       <Tabs.Screen
