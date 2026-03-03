@@ -1,0 +1,13 @@
+{
+  "name": "bluestarbeats-workspace",
+  "private": true,
+  "workspaces": [
+    "rebuild"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w rebuild",
+    "build": "npm run build -w rebuild",
+    "start": "npm run start -w rebuild",
+    "lint": "npm run lint -w rebuild"
+  }
+}
