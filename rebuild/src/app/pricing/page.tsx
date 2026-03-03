@@ -19,11 +19,34 @@ export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [now, setNow] = useState(0);
+  const [foundersRemaining, setFoundersRemaining] = useState<number>(FOUNDERS_CAP);
 
   useEffect(() => {
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadStatus = async () => {
+      try {
+        const response = await fetch("/api/founders/status", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { remaining?: number };
+        if (active && typeof data.remaining === "number") {
+          setFoundersRemaining(Math.max(0, data.remaining));
+        }
+      } catch {
+        // Keep static fallback.
+      }
+    };
+
+    void loadStatus();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const foundersCountdown = (() => {
@@ -81,6 +104,7 @@ export default function PricingPage() {
         <p className="mt-1">
           Cap: {FOUNDERS_CAP} users. Deadline: March 31, 2026 11:59 PM PT.
         </p>
+        <p className="mt-1 text-xs">Remaining slots: {foundersRemaining}</p>
         <p className="mt-1 text-xs">Countdown snapshot: {foundersCountdown} remaining.</p>
       </div>
 

@@ -6,6 +6,14 @@ import { AdSlot } from "@/components/monetization/ad-slot";
 import { usePlanTier } from "@/hooks/use-plan-tier";
 import { useSessionMetrics } from "@/hooks/use-session-metrics";
 import { BrainwaveAudioEngine } from "@/lib/audio/engine";
+import {
+  CARRIER_MAX_HZ,
+  CARRIER_MIN_HZ,
+  ENTRAINMENT_MAX_HZ,
+  ENTRAINMENT_MIN_HZ,
+  clampAudioSettings,
+  getHighFrequencyWarning,
+} from "@/lib/audio/limits";
 import { DEFAULT_AUDIO_SETTINGS, type AudioMode, type AudioSettings, type Waveform } from "@/lib/audio/types";
 import { readLocalJson } from "@/lib/storage";
 
@@ -28,6 +36,9 @@ export function PlayerStudio() {
   const [unlocked, setUnlocked] = useState(false);
   const [showPostSessionAd, setShowPostSessionAd] = useState(false);
   const [paywallMessage, setPaywallMessage] = useState<string | null>(null);
+  const [safetyMessage, setSafetyMessage] = useState<string | null>(() =>
+    getHighFrequencyWarning(settings.carrierHz),
+  );
   const { tier, entitlements } = usePlanTier();
   const { metrics, recordCompletedSession } = useSessionMetrics();
 
@@ -77,6 +88,7 @@ export function PlayerStudio() {
   async function patchSettings(partial: Partial<AudioSettings>) {
     const next = clampAudioSettings({ ...settings, ...partial });
     setSettings(next);
+    setSafetyMessage(getHighFrequencyWarning(next.carrierHz));
     await engineRef.current.update(next);
   }
 
@@ -136,6 +148,13 @@ export function PlayerStudio() {
         </div>
       ) : null}
 
+      {safetyMessage ? (
+        <div className="rounded-xl border border-rose-300/35 bg-rose-950/30 p-3 text-xs text-rose-100">
+          <p className="font-semibold uppercase tracking-wide">Hearing & Hardware Warning</p>
+          <p className="mt-1">{safetyMessage}</p>
+        </div>
+      ) : null}
+
       <section className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-3">
         <h2 className="text-sm font-semibold text-slate-100">Mode</h2>
         <div className="grid grid-cols-2 gap-2">
@@ -178,17 +197,17 @@ export function PlayerStudio() {
         <SliderControl
           label="Carrier"
           unit="Hz"
-          min={20}
-          max={1000}
-          step={0.1}
+          min={CARRIER_MIN_HZ}
+          max={CARRIER_MAX_HZ}
+          step={1}
           value={settings.carrierHz}
           onChange={(value) => void patchSettings({ carrierHz: value })}
         />
         <SliderControl
           label={settings.mode === "binaural" ? "Beat" : "Pulse"}
           unit="Hz"
-          min={0.1}
-          max={40}
+          min={ENTRAINMENT_MIN_HZ}
+          max={ENTRAINMENT_MAX_HZ}
           step={0.1}
           value={settings.entrainmentHz}
           onChange={(value) => void patchSettings({ entrainmentHz: value })}
@@ -220,15 +239,6 @@ export function PlayerStudio() {
       </section>
     </div>
   );
-}
-
-function clampAudioSettings(next: AudioSettings): AudioSettings {
-  return {
-    ...next,
-    carrierHz: Math.min(1000, Math.max(20, Number(next.carrierHz.toFixed(3)))),
-    entrainmentHz: Math.min(40, Math.max(0.1, Number(next.entrainmentHz.toFixed(3)))),
-    volume: Math.min(1, Math.max(0.01, Number(next.volume.toFixed(3)))),
-  };
 }
 
 interface SliderControlProps {

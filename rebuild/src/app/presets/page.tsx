@@ -5,6 +5,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { usePlanTier } from "@/hooks/use-plan-tier";
+import {
+  CARRIER_MAX_HZ,
+  CARRIER_MIN_HZ,
+  ENTRAINMENT_MAX_HZ,
+  ENTRAINMENT_MIN_HZ,
+  clampCarrierHz,
+  clampEntrainmentHz,
+  clampVolume,
+  getHighFrequencyWarning,
+} from "@/lib/audio/limits";
 import { DEFAULT_AUDIO_SETTINGS, type AudioMode, type Waveform } from "@/lib/audio/types";
 import type { GoalTag, PresetRecord } from "@/lib/domain";
 import { generateId } from "@/lib/id";
@@ -78,6 +88,14 @@ export default function PresetsPage() {
       return;
     }
 
+    const sanitizedCarrierHz = clampCarrierHz(carrierHz);
+    const sanitizedEntrainmentHz = clampEntrainmentHz(entrainmentHz);
+    const sanitizedVolume = clampVolume(volume);
+
+    setCarrierHz(sanitizedCarrierHz);
+    setEntrainmentHz(sanitizedEntrainmentHz);
+    setVolume(sanitizedVolume);
+
     if (usingRemote) {
       try {
         const response = await fetch("/api/presets", {
@@ -88,9 +106,9 @@ export default function PresetsPage() {
             tags: selectedTags.length ? selectedTags : ["custom"],
             mode,
             waveform,
-            carrierHz: Number(carrierHz.toFixed(2)),
-            entrainmentHz: Number(entrainmentHz.toFixed(2)),
-            volume: Number(volume.toFixed(2)),
+            carrierHz: sanitizedCarrierHz,
+            entrainmentHz: sanitizedEntrainmentHz,
+            volume: sanitizedVolume,
           }),
         });
 
@@ -120,9 +138,9 @@ export default function PresetsPage() {
       tags: selectedTags.length ? selectedTags : ["custom"],
       mode,
       waveform,
-      carrierHz: Number(carrierHz.toFixed(2)),
-      entrainmentHz: Number(entrainmentHz.toFixed(2)),
-      volume: Number(volume.toFixed(2)),
+      carrierHz: sanitizedCarrierHz,
+      entrainmentHz: sanitizedEntrainmentHz,
+      volume: sanitizedVolume,
       createdAt: new Date().toISOString(),
     };
 
@@ -244,10 +262,30 @@ export default function PresetsPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <NumberField label="Carrier Hz" value={carrierHz} step={0.1} onChange={setCarrierHz} />
-          <NumberField label="Entrain Hz" value={entrainmentHz} step={0.1} onChange={setEntrainmentHz} />
-          <NumberField label="Volume" value={volume} step={0.01} onChange={setVolume} />
+          <NumberField
+            label="Carrier Hz"
+            value={carrierHz}
+            step={1}
+            min={CARRIER_MIN_HZ}
+            max={CARRIER_MAX_HZ}
+            onChange={setCarrierHz}
+          />
+          <NumberField
+            label="Entrain Hz"
+            value={entrainmentHz}
+            step={0.1}
+            min={ENTRAINMENT_MIN_HZ}
+            max={ENTRAINMENT_MAX_HZ}
+            onChange={setEntrainmentHz}
+          />
+          <NumberField label="Volume" value={volume} step={0.01} min={0.01} max={1} onChange={setVolume} />
         </div>
+
+        {getHighFrequencyWarning(carrierHz) ? (
+          <p className="rounded-lg border border-rose-300/35 bg-rose-950/30 px-3 py-2 text-[11px] text-rose-100">
+            {getHighFrequencyWarning(carrierHz)}
+          </p>
+        ) : null}
 
         <div className="space-y-1">
           <p className="text-xs text-slate-300">Tags</p>
@@ -365,10 +403,12 @@ interface NumberFieldProps {
   label: string;
   value: number;
   step: number;
+  min: number;
+  max: number;
   onChange: (value: number) => void;
 }
 
-function NumberField({ label, value, step, onChange }: NumberFieldProps) {
+function NumberField({ label, value, step, min, max, onChange }: NumberFieldProps) {
   return (
     <label className="space-y-1 text-xs text-slate-300">
       <span>{label}</span>
@@ -376,7 +416,12 @@ function NumberField({ label, value, step, onChange }: NumberFieldProps) {
         type="number"
         value={value}
         step={step}
-        onChange={(event) => onChange(Number(event.target.value))}
+        min={min}
+        max={max}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          if (Number.isFinite(next)) onChange(next);
+        }}
         className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
       />
     </label>

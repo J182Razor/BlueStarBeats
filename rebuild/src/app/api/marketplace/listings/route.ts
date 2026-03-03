@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clampAudioSettings } from "@/lib/audio/limits";
 import { DEFAULT_AUDIO_SETTINGS } from "@/lib/audio/types";
 import { getServerSessionWithEntitlements } from "@/lib/server/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -62,24 +63,24 @@ function buildPreview(
   if (listing.listing_type === "preset") {
     const source = presetMap.get(listing.source_id);
     if (!source) return DEFAULT_AUDIO_SETTINGS;
-    return {
+    return clampAudioSettings({
       mode: source.mode as "binaural" | "isochronic",
       waveform: source.waveform as "sine" | "triangle" | "square" | "sawtooth",
       carrierHz: Number(source.carrier_hz),
       entrainmentHz: Number(source.entrainment_hz),
       volume: Number(source.volume),
-    };
+    });
   }
 
   const waypoint = waypointMap.get(listing.source_id);
   if (!waypoint) return DEFAULT_AUDIO_SETTINGS;
-  return {
+  return clampAudioSettings({
     mode: waypoint.mode as "binaural" | "isochronic",
     waveform: waypoint.waveform as "sine" | "triangle" | "square" | "sawtooth",
     carrierHz: Number(waypoint.carrier_hz),
     entrainmentHz: Number(waypoint.entrainment_hz),
     volume: Number(waypoint.volume),
-  };
+  });
 }
 
 export async function GET(request: Request) {

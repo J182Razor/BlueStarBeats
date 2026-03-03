@@ -1,4 +1,11 @@
 import { NextResponse } from "next/server";
+import {
+  isValidAudioMode,
+  isValidCarrierHz,
+  isValidEntrainmentHz,
+  isValidVolume,
+  isValidWaveform,
+} from "@/lib/audio/limits";
 import { getServerSessionWithEntitlements } from "@/lib/server/session";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -40,6 +47,14 @@ interface CreateProgramBody {
   name: string;
   goalTag: string;
   waypoints: CreateWaypointBody[];
+}
+
+function isValidTransitionType(value: unknown): value is "step" | "ramp" {
+  return value === "step" || value === "ramp";
+}
+
+function isValidDurationMinutes(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 1 && value <= 720;
 }
 
 function mapProgramRow(row: ProgramRow) {
@@ -117,6 +132,27 @@ export async function POST(request: Request) {
     );
   }
 
+  const invalidWaypoint = body.waypoints.find(
+    (waypoint) =>
+      !isValidDurationMinutes(waypoint.durationMinutes) ||
+      !isValidAudioMode(waypoint.mode) ||
+      !isValidWaveform(waypoint.waveform) ||
+      !isValidCarrierHz(waypoint.carrierHz) ||
+      !isValidEntrainmentHz(waypoint.entrainmentHz) ||
+      !isValidVolume(waypoint.volume) ||
+      !isValidTransitionType(waypoint.transitionType),
+  );
+  if (invalidWaypoint) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Invalid waypoint settings. Ensure duration is 1-720 minutes, carrier 20-20000 Hz, entrainment 0.1-40 Hz, and volume 0.01-1.",
+      },
+      { status: 400 },
+    );
+  }
+
   const supabase = await getServerSupabaseClient();
   const { count, error: countError } = await supabase
     .from("programs")
@@ -155,7 +191,7 @@ export async function POST(request: Request) {
   const waypointRows = body.waypoints.map((waypoint, index) => ({
     program_id: insertedProgram.id,
     position: index + 1,
-    duration_minutes: waypoint.durationMinutes,
+    duration_minutes: Math.round(waypoint.durationMinutes),
     mode: waypoint.mode,
     waveform: waypoint.waveform,
     carrier_hz: waypoint.carrierHz,

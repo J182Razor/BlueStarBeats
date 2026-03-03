@@ -6,6 +6,17 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { usePlanTier } from "@/hooks/use-plan-tier";
 import { BrainwaveAudioEngine } from "@/lib/audio/engine";
+import {
+  CARRIER_MAX_HZ,
+  CARRIER_MIN_HZ,
+  ENTRAINMENT_MAX_HZ,
+  ENTRAINMENT_MIN_HZ,
+  HIGH_FREQUENCY_WARNING_HZ,
+  clampCarrierHz,
+  clampEntrainmentHz,
+  clampVolume,
+  getHighFrequencyWarning,
+} from "@/lib/audio/limits";
 import { DEFAULT_AUDIO_SETTINGS, type AudioSettings } from "@/lib/audio/types";
 import type { GoalTag, ProgramRecord, ProgramWaypoint } from "@/lib/domain";
 import { generateId } from "@/lib/id";
@@ -109,8 +120,22 @@ export default function ProgramsPage() {
   }
 
   function updateWaypoint(id: string, patch: Partial<ProgramWaypoint>) {
+    const normalized: Partial<ProgramWaypoint> = { ...patch };
+    if (typeof patch.durationMinutes === "number") {
+      normalized.durationMinutes = Math.max(1, Math.round(patch.durationMinutes));
+    }
+    if (typeof patch.carrierHz === "number") {
+      normalized.carrierHz = clampCarrierHz(patch.carrierHz);
+    }
+    if (typeof patch.entrainmentHz === "number") {
+      normalized.entrainmentHz = clampEntrainmentHz(patch.entrainmentHz);
+    }
+    if (typeof patch.volume === "number") {
+      normalized.volume = clampVolume(patch.volume);
+    }
+
     setWaypoints((current) =>
-      current.map((waypoint) => (waypoint.id === id ? { ...waypoint, ...patch } : waypoint)),
+      current.map((waypoint) => (waypoint.id === id ? { ...waypoint, ...normalized } : waypoint)),
     );
   }
 
@@ -124,6 +149,15 @@ export default function ProgramsPage() {
       return;
     }
 
+    const normalizedWaypoints = waypoints.map((waypoint) => ({
+      ...waypoint,
+      durationMinutes: Math.max(1, Math.round(waypoint.durationMinutes)),
+      carrierHz: clampCarrierHz(waypoint.carrierHz),
+      entrainmentHz: clampEntrainmentHz(waypoint.entrainmentHz),
+      volume: clampVolume(waypoint.volume),
+    }));
+    setWaypoints(normalizedWaypoints);
+
     if (usingRemote) {
       try {
         const response = await fetch("/api/programs", {
@@ -132,7 +166,7 @@ export default function ProgramsPage() {
           body: JSON.stringify({
             name: name.trim(),
             goalTag,
-            waypoints: waypoints.map((waypoint) => ({
+            waypoints: normalizedWaypoints.map((waypoint) => ({
               durationMinutes: waypoint.durationMinutes,
               mode: waypoint.mode,
               waveform: waypoint.waveform,
@@ -168,7 +202,7 @@ export default function ProgramsPage() {
       return;
     }
 
-    if (waypoints.length > entitlements.maxWaypoints) {
+    if (normalizedWaypoints.length > entitlements.maxWaypoints) {
       setMessage("Waypoint count exceeds current plan limit.");
       return;
     }
@@ -177,7 +211,7 @@ export default function ProgramsPage() {
       id: generateId(),
       name: name.trim(),
       goalTag,
-      waypoints,
+      waypoints: normalizedWaypoints,
       createdAt: new Date().toISOString(),
     };
 
@@ -342,25 +376,33 @@ export default function ProgramsPage() {
                 <SmallNumber
                   label="Minutes"
                   value={waypoint.durationMinutes}
-                  step={0.5}
+                  step={1}
+                  min={1}
+                  max={720}
                   onChange={(value) => updateWaypoint(waypoint.id, { durationMinutes: value })}
                 />
                 <SmallNumber
                   label="Carrier Hz"
                   value={waypoint.carrierHz}
-                  step={0.5}
+                  step={1}
+                  min={CARRIER_MIN_HZ}
+                  max={CARRIER_MAX_HZ}
                   onChange={(value) => updateWaypoint(waypoint.id, { carrierHz: value })}
                 />
                 <SmallNumber
                   label="Entrain Hz"
                   value={waypoint.entrainmentHz}
                   step={0.1}
+                  min={ENTRAINMENT_MIN_HZ}
+                  max={ENTRAINMENT_MAX_HZ}
                   onChange={(value) => updateWaypoint(waypoint.id, { entrainmentHz: value })}
                 />
                 <SmallNumber
                   label="Volume"
                   value={waypoint.volume}
                   step={0.01}
+                  min={0.01}
+                  max={1}
                   onChange={(value) => updateWaypoint(waypoint.id, { volume: value })}
                 />
                 <SmallSelect
@@ -396,6 +438,11 @@ export default function ProgramsPage() {
         </div>
 
         {message ? <p className="text-xs text-cyan-100">{message}</p> : null}
+        {waypoints.some((waypoint) => waypoint.carrierHz >= HIGH_FREQUENCY_WARNING_HZ) ? (
+          <p className="rounded-lg border border-rose-300/35 bg-rose-950/30 px-3 py-2 text-[11px] text-rose-100">
+            {getHighFrequencyWarning(waypoints.reduce((max, waypoint) => Math.max(max, waypoint.carrierHz), 0))}
+          </p>
+        ) : null}
       </article>
 
       {waypoints.length >= entitlements.maxWaypoints && entitlements.maxWaypoints !== 9999 ? (
@@ -452,10 +499,12 @@ interface SmallNumberProps {
   label: string;
   value: number;
   step: number;
+  min: number;
+  max: number;
   onChange: (value: number) => void;
 }
 
-function SmallNumber({ label, value, step, onChange }: SmallNumberProps) {
+function SmallNumber({ label, value, step, min, max, onChange }: SmallNumberProps) {
   return (
     <label className="space-y-1 text-[11px] text-slate-300">
       <span>{label}</span>
@@ -463,7 +512,12 @@ function SmallNumber({ label, value, step, onChange }: SmallNumberProps) {
         type="number"
         value={value}
         step={step}
-        onChange={(event) => onChange(Number(event.target.value))}
+        min={min}
+        max={max}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          if (Number.isFinite(next)) onChange(next);
+        }}
         className="w-full rounded-md border border-white/15 bg-slate-900/80 px-2 py-1 text-xs text-white"
       />
     </label>

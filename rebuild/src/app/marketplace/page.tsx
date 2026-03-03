@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AdSlot } from "@/components/monetization/ad-slot";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { usePlanTier } from "@/hooks/use-plan-tier";
@@ -332,8 +331,6 @@ export default function MarketplacePage() {
           </button>
         ))}
       </div>
-
-      <AdSlot context="pre-session" isFreeTier={entitlements.adsEnabled} />
 
       {loadingListings ? <p className="text-xs text-slate-400">Loading marketplace...</p> : null}
 

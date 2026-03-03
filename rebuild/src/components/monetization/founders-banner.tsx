@@ -14,14 +14,41 @@ function formatRemaining(ms: number) {
 
 export function FoundersBanner() {
   const [now, setNow] = useState(() => Date.now());
+  const [slotsRemaining, setSlotsRemaining] = useState(FOUNDERS_CAP);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadStatus = async () => {
+      try {
+        const response = await fetch("/api/founders/status", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { remaining?: number };
+        if (active && typeof data.remaining === "number") {
+          setSlotsRemaining(Math.max(0, data.remaining));
+        }
+      } catch {
+        // keep default/fallback slots value
+      }
+    };
+
+    void loadStatus();
+    const timer = window.setInterval(() => {
+      void loadStatus();
+    }, 300000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const remainingMs = FOUNDERS_DEADLINE.getTime() - now;
-  const slotsRemaining = FOUNDERS_CAP;
 
   return (
     <div className="border-t border-white/10 bg-amber-200/15 px-4 py-2 text-xs text-amber-50">

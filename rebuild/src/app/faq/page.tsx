@@ -20,6 +20,11 @@ const FAQ = [
       "Founders is a one-time lifetime offer capped at 250 users until March 31, 2026 at 11:59 PM PT.",
   },
   {
+    question: "Why do I see a high-frequency warning?",
+    answer:
+      "Carrier frequencies can go up to 20,000 Hz, but many listeners cannot hear above 16,000 Hz and some headphones/speakers may distort or fail to reproduce those tones accurately. Keep volume low and increase gradually.",
+  },
+  {
     question: "Is this a medical treatment app?",
     answer:
       "No. BlueStarBeats is a wellness and focus tool and does not provide medical diagnosis or treatment.",

@@ -15,6 +15,8 @@ Mobile-first Next.js PWA for real-time brainwave entrainment (binaural + isochro
 - Audio engine with:
   - Binaural split math (`carrier ± beat/2`)
   - Isochronic pulse modulation
+  - Carrier range up to 20,000 Hz
+  - Hearing/hardware warning for high-frequency output
   - Real-time tuning updates
   - Mode/waveform switching
   - Fade in/out on play/stop
@@ -36,11 +38,13 @@ Mobile-first Next.js PWA for real-time brainwave entrainment (binaural + isochro
   - Supabase-backed public listings via `/api/marketplace/listings`
 - Monetization:
   - Pricing plans (Free/Pro/Elite/Founders)
-  - Founders banner + countdown
+  - Founders banner + countdown + remaining slot fetch
   - Paywall trigger messaging in player flow
   - Free-tier ads shown only pre-session and post-session
+  - One-time packs and creator tips ($5/$10/$25)
 - API gating endpoints:
   - `/api/auth/session`
+  - `/api/founders/status`
   - `/api/presets`
   - `/api/programs`
   - `/api/marketplace/import`
@@ -90,7 +94,7 @@ rebuild/
       use-plan-tier.ts
       use-session-metrics.ts
     lib/
-      audio/{engine,types}.ts
+      audio/{engine,types,limits}.ts
       supabase/{browser,server,admin}.ts
       stripe/catalog.ts
       server/session.ts
@@ -103,6 +107,7 @@ rebuild/
       id.ts
   supabase/
     migrations/0001_initial.sql
+    migrations/0002_audio_bounds.sql
     seeds/0001_marketplace_seed.sql
 ```
 
@@ -145,7 +150,9 @@ Stripe price IDs:
 ## Supabase Setup
 1. Create a Supabase project.
 2. Run SQL migration:
-   - File: `supabase/migrations/0001_initial.sql`
+   - Files:
+     - `supabase/migrations/0001_initial.sql`
+     - `supabase/migrations/0002_audio_bounds.sql`
 3. Enable email/password auth in Supabase Auth.
 4. Confirm tables exist:
    - `user_profiles`
@@ -229,4 +236,4 @@ npx cap sync
    - `SUPABASE_SERVICE_ROLE_KEY`
 2. Redeploy after env updates.
 3. Confirm auth cookie refresh is active by signing in and calling `/api/auth/session`.
-4. Run migration SQL (`0001_initial.sql`) then seed SQL (`0001_marketplace_seed.sql`) in Supabase SQL editor.
+4. Run migration SQL (`0001_initial.sql`, then `0002_audio_bounds.sql`) and seed SQL (`0001_marketplace_seed.sql`) in Supabase SQL editor.

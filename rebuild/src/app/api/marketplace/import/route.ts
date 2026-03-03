@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  clampCarrierHz,
+  clampEntrainmentHz,
+  clampVolume,
+} from "@/lib/audio/limits";
 import { getServerSessionWithEntitlements } from "@/lib/server/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -124,9 +129,9 @@ export async function POST(request: Request) {
         tags: listing.goal_tags ?? [],
         mode: source.mode,
         waveform: source.waveform,
-        carrier_hz: source.carrier_hz,
-        entrainment_hz: source.entrainment_hz,
-        volume: source.volume,
+        carrier_hz: clampCarrierHz(source.carrier_hz),
+        entrainment_hz: clampEntrainmentHz(source.entrainment_hz),
+        volume: clampVolume(source.volume),
       })
       .select("id,name")
       .single();
@@ -218,12 +223,12 @@ export async function POST(request: Request) {
     const insertWaypoints = sourceWaypointRows.map((waypoint) => ({
       program_id: insertedProgram.id,
       position: waypoint.position,
-      duration_minutes: waypoint.duration_minutes,
+      duration_minutes: Math.max(1, Math.round(waypoint.duration_minutes)),
       mode: waypoint.mode,
       waveform: waypoint.waveform,
-      carrier_hz: waypoint.carrier_hz,
-      entrainment_hz: waypoint.entrainment_hz,
-      volume: waypoint.volume,
+      carrier_hz: clampCarrierHz(waypoint.carrier_hz),
+      entrainment_hz: clampEntrainmentHz(waypoint.entrainment_hz),
+      volume: clampVolume(waypoint.volume),
       transition_type: waypoint.transition_type,
     }));
 

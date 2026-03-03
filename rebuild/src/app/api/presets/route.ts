@@ -1,4 +1,11 @@
 import { NextResponse } from "next/server";
+import {
+  isValidAudioMode,
+  isValidCarrierHz,
+  isValidEntrainmentHz,
+  isValidVolume,
+  isValidWaveform,
+} from "@/lib/audio/limits";
 import { getServerSessionWithEntitlements } from "@/lib/server/session";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -85,6 +92,22 @@ export async function POST(request: Request) {
   if (!body.name?.trim()) {
     return NextResponse.json({ ok: false, message: "Preset name is required" }, { status: 400 });
   }
+  if (
+    !isValidAudioMode(body.mode) ||
+    !isValidWaveform(body.waveform) ||
+    !isValidCarrierHz(body.carrierHz) ||
+    !isValidEntrainmentHz(body.entrainmentHz) ||
+    !isValidVolume(body.volume)
+  ) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Invalid audio settings. Carrier must be 20-20000 Hz, entrainment 0.1-40 Hz, and volume 0.01-1.",
+      },
+      { status: 400 },
+    );
+  }
 
   const supabase = await getServerSupabaseClient();
   const { count, error: countError } = await supabase
@@ -139,6 +162,21 @@ export async function PATCH(request: Request) {
   const body = (await request.json()) as UpdatePresetBody;
   if (!body.id) {
     return NextResponse.json({ ok: false, message: "Preset ID is required" }, { status: 400 });
+  }
+  if (body.mode !== undefined && !isValidAudioMode(body.mode)) {
+    return NextResponse.json({ ok: false, message: "Invalid mode value." }, { status: 400 });
+  }
+  if (body.waveform !== undefined && !isValidWaveform(body.waveform)) {
+    return NextResponse.json({ ok: false, message: "Invalid waveform value." }, { status: 400 });
+  }
+  if (body.carrierHz !== undefined && !isValidCarrierHz(body.carrierHz)) {
+    return NextResponse.json({ ok: false, message: "Carrier must be 20-20000 Hz." }, { status: 400 });
+  }
+  if (body.entrainmentHz !== undefined && !isValidEntrainmentHz(body.entrainmentHz)) {
+    return NextResponse.json({ ok: false, message: "Entrainment must be 0.1-40 Hz." }, { status: 400 });
+  }
+  if (body.volume !== undefined && !isValidVolume(body.volume)) {
+    return NextResponse.json({ ok: false, message: "Volume must be between 0.01 and 1." }, { status: 400 });
   }
 
   const updatePayload: Record<string, unknown> = {};

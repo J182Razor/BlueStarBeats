@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { getServerEnv } from "@/lib/env";
-import type { PlanTier } from "@/lib/plans";
+import { FOUNDERS_CAP, FOUNDERS_DEADLINE, type PlanTier } from "@/lib/plans";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,28 @@ export async function POST(request: Request) {
 
   if (!body.userId || !priceId || !mode || !purchaseType) {
     return NextResponse.json({ error: "Missing checkout fields" }, { status: 400 });
+  }
+
+  if (purchaseType === "founders_lifetime" || body.tier === "founders") {
+    if (Date.now() >= FOUNDERS_DEADLINE.getTime()) {
+      return NextResponse.json({ error: "Founders offer deadline has passed." }, { status: 410 });
+    }
+
+    try {
+      const admin = getSupabaseAdminClient();
+      const { count, error } = await admin
+        .from("purchases")
+        .select("id", { count: "exact", head: true })
+        .eq("purchase_type", "founders_lifetime")
+        .eq("status", "completed");
+
+      if (error) throw error;
+      if ((count ?? 0) >= FOUNDERS_CAP) {
+        return NextResponse.json({ error: "Founders cap has been reached." }, { status: 409 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Unable to verify founders inventory right now." }, { status: 503 });
+    }
   }
 
   const session = await stripe.checkout.sessions.create({

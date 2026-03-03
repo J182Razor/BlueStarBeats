@@ -1,4 +1,10 @@
 import type { AudioSettings } from "@/lib/audio/types";
+import {
+  CARRIER_MAX_HZ,
+  CARRIER_MIN_HZ,
+  ENTRAINMENT_MIN_HZ,
+  clampAudioSettings,
+} from "@/lib/audio/limits";
 
 export class BrainwaveAudioEngine {
   private ctx: AudioContext | null = null;
@@ -42,7 +48,7 @@ export class BrainwaveAudioEngine {
 
     const lp = this.ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(18000, this.ctx.currentTime);
+    lp.frequency.setValueAtTime(CARRIER_MAX_HZ, this.ctx.currentTime);
 
     const compressor = this.ctx.createDynamicsCompressor();
     compressor.threshold.setValueAtTime(-20, this.ctx.currentTime);
@@ -122,6 +128,10 @@ export class BrainwaveAudioEngine {
     }
   }
 
+  private clampOscillatorHz(value: number) {
+    return Math.min(CARRIER_MAX_HZ, Math.max(1, value));
+  }
+
   private connectBinaural(ctx: AudioContext) {
     if (!this.masterGain) return;
     this.leftOsc = ctx.createOscillator();
@@ -144,8 +154,8 @@ export class BrainwaveAudioEngine {
 
     this.leftOsc.type = this.settings.waveform;
     this.rightOsc.type = this.settings.waveform;
-    this.leftOsc.frequency.setValueAtTime(Math.max(1, leftHz), ctx.currentTime);
-    this.rightOsc.frequency.setValueAtTime(Math.max(1, rightHz), ctx.currentTime);
+    this.leftOsc.frequency.setValueAtTime(this.clampOscillatorHz(leftHz), ctx.currentTime);
+    this.rightOsc.frequency.setValueAtTime(this.clampOscillatorHz(rightHz), ctx.currentTime);
 
     this.leftOsc.connect(leftGain);
     this.rightOsc.connect(rightGain);
@@ -168,10 +178,13 @@ export class BrainwaveAudioEngine {
     this.dcOffset = ctx.createConstantSource();
 
     this.isoOsc.type = this.settings.waveform;
-    this.isoOsc.frequency.setValueAtTime(this.settings.carrierHz, ctx.currentTime);
+    this.isoOsc.frequency.setValueAtTime(
+      Math.min(CARRIER_MAX_HZ, Math.max(CARRIER_MIN_HZ, this.settings.carrierHz)),
+      ctx.currentTime,
+    );
     this.lfoOsc.type = "sine";
     this.lfoOsc.frequency.setValueAtTime(
-      Math.max(0.1, this.settings.entrainmentHz),
+      Math.max(ENTRAINMENT_MIN_HZ, this.settings.entrainmentHz),
       ctx.currentTime,
     );
 
@@ -193,7 +206,11 @@ export class BrainwaveAudioEngine {
   }
 
   async start(settings?: Partial<AudioSettings>) {
-    if (settings) this.settings = { ...this.settings, ...settings };
+    if (settings) {
+      this.settings = clampAudioSettings({ ...this.settings, ...settings });
+    } else {
+      this.settings = clampAudioSettings(this.settings);
+    }
     if (!this.unlocked) throw new Error("Audio context must be unlocked by user gesture");
 
     const ctx = this.ensureContext();
@@ -235,7 +252,7 @@ export class BrainwaveAudioEngine {
   }
 
   async update(next: Partial<AudioSettings>) {
-    this.settings = { ...this.settings, ...next };
+    this.settings = clampAudioSettings({ ...this.settings, ...next });
     if (!this.isPlaying || !this.ctx || !this.masterGain) return;
 
     const now = this.ctx.currentTime;
@@ -254,14 +271,18 @@ export class BrainwaveAudioEngine {
     if (this.settings.mode === "binaural" && this.leftOsc && this.rightOsc) {
       const leftHz = this.settings.carrierHz - this.settings.entrainmentHz / 2;
       const rightHz = this.settings.carrierHz + this.settings.entrainmentHz / 2;
-      this.leftOsc.frequency.setTargetAtTime(Math.max(1, leftHz), now, 0.01);
-      this.rightOsc.frequency.setTargetAtTime(Math.max(1, rightHz), now, 0.01);
+      this.leftOsc.frequency.setTargetAtTime(this.clampOscillatorHz(leftHz), now, 0.01);
+      this.rightOsc.frequency.setTargetAtTime(this.clampOscillatorHz(rightHz), now, 0.01);
     }
 
     if (this.settings.mode === "isochronic" && this.isoOsc && this.lfoOsc) {
-      this.isoOsc.frequency.setTargetAtTime(Math.max(1, this.settings.carrierHz), now, 0.01);
+      this.isoOsc.frequency.setTargetAtTime(
+        Math.min(CARRIER_MAX_HZ, Math.max(CARRIER_MIN_HZ, this.settings.carrierHz)),
+        now,
+        0.01,
+      );
       this.lfoOsc.frequency.setTargetAtTime(
-        Math.max(0.1, this.settings.entrainmentHz),
+        Math.max(ENTRAINMENT_MIN_HZ, this.settings.entrainmentHz),
         now,
         0.01,
       );
