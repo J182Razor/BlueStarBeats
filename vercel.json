@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install"
+  "framework": "nextjs",
+  "installCommand": "cd rebuild && npm install",
+  "buildCommand": "cd rebuild && npm run build",
+  "outputDirectory": "rebuild/.next"
 }

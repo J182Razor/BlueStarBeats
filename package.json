@@ -4,6 +4,9 @@
   "workspaces": [
     "rebuild"
   ],
+  "dependencies": {
+    "next": "16.1.6"
+  },
   "scripts": {
     "dev": "npm run dev -w rebuild",
     "build": "npm run build -w rebuild",
