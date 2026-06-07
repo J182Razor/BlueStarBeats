@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { usePlanTier } from "@/hooks/use-plan-tier";
 import { useSessionMetrics } from "@/hooks/use-session-metrics";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
-import { FOUNDERS_DEADLINE, type PlanTier } from "@/lib/plans";
+import { PLANS, type PlanTier } from "@/lib/plans";
 
 const ALL_TIERS: PlanTier[] = ["free", "pro", "elite", "founders"];
 
@@ -28,7 +28,7 @@ export default function AccountPage() {
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-  const foundersUtc = useMemo(() => FOUNDERS_DEADLINE.toUTCString(), []);
+  const planName = PLANS.find((plan) => plan.tier === tier)?.name ?? "Free";
 
   async function signIn() {
     if (!authEnabled) return;
@@ -41,7 +41,7 @@ export default function AccountPage() {
       setAuthMessage(error.message);
       return;
     }
-    setAuthMessage("Signed in.");
+    setAuthMessage("Welcome back.");
     authSession.refresh();
   }
 
@@ -56,7 +56,7 @@ export default function AccountPage() {
       setAuthMessage(error.message);
       return;
     }
-    setAuthMessage("Sign-up submitted. Confirm email if verification is enabled.");
+    setAuthMessage("Account created. Check your email if confirmation is required.");
     authSession.refresh();
   }
 
@@ -69,127 +69,153 @@ export default function AccountPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
       <header>
-        <h1 className="font-display text-2xl font-semibold text-white">Account</h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Auth, entitlement state, session metrics, and monetization controls.
+        <h1 className="h-display text-[1.75rem]">Your practice</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Your plan, your account, and the shape of your listening.
         </p>
       </header>
 
       {checkoutStatus ? (
-        <div className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-3 text-xs text-cyan-100">
-          Checkout result: {checkoutStatus}.
+        <div className="card-gold text-xs">
+          {checkoutStatus === "success"
+            ? "Your upgrade is complete. Welcome."
+            : `Checkout status: ${checkoutStatus}.`}
         </div>
       ) : null}
 
-      <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Plan & Entitlements</h2>
-        <p className="mt-2 text-xs text-slate-300">Current plan: {tier.toUpperCase()}</p>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-          {ALL_TIERS.map((option) => (
-            <button
-              key={option}
-              onClick={() => setTier(option)}
-              disabled={authSession.authenticated}
-              className={`rounded-full px-3 py-1 text-xs ${
-                tier === option ? "bg-cyan-400/30 text-cyan-100" : "bg-slate-800 text-slate-300"
-              } disabled:opacity-50`}
-            >
-              {option}
-            </button>
-          ))}
+      <article className="card">
+        <div className="flex items-baseline justify-between">
+          <h2 className="h-display text-xl">Plan</h2>
+          <span className="text-sm text-gold-bright">{planName}</span>
         </div>
-        {authSession.authenticated ? (
-          <p className="mt-2 text-[11px] text-slate-400">
-            Plan switches for authenticated users are controlled by Stripe/webhook entitlements.
-          </p>
-        ) : null}
 
-        <ul className="mt-3 space-y-1 text-xs text-slate-200">
-          <li>Ads enabled: {entitlements.adsEnabled ? "Yes" : "No"}</li>
-          <li>Max presets: {entitlements.maxPresets === 9999 ? "Unlimited" : entitlements.maxPresets}</li>
-          <li>Max programs: {entitlements.maxPrograms === 9999 ? "Unlimited" : entitlements.maxPrograms}</li>
+        <ul className="mt-3 space-y-1.5 text-sm text-ink-muted">
           <li>
-            Max waypoints/program: {entitlements.maxWaypoints === 9999 ? "Unlimited" : entitlements.maxWaypoints}
+            Library:{" "}
+            {entitlements.maxPresets === 9999 ? "unlimited presets" : `${entitlements.maxPresets} presets`}
           </li>
-          <li>Marketplace import: {entitlements.canImport ? "Enabled" : "Locked"}</li>
-          <li>Marketplace publish: {entitlements.canPublish ? "Enabled" : "Locked"}</li>
-          <li>Packs access: {entitlements.canAccessPacks ? "Included" : "Purchase required"}</li>
+          <li>
+            Journeys:{" "}
+            {entitlements.maxPrograms === 9999
+              ? "unlimited, with unlimited phases"
+              : `${entitlements.maxPrograms}, up to ${entitlements.maxWaypoints} phases`}
+          </li>
+          <li>Market: browse and preview{entitlements.canImport ? ", import, and publish" : " only"}</li>
+          <li>Protocol packs: {entitlements.canAccessPacks ? "all included" : "available separately"}</li>
+          <li>Sponsor messages: {entitlements.adsEnabled ? "on the free plan" : "none"}</li>
         </ul>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Link href="/pricing" className="btn-gold text-xs">
+            Manage Plan
+          </Link>
+          <span className="text-[11px] text-ink-faint">Change or cancel any time.</span>
+        </div>
+
+        {!authSession.authenticated ? (
+          <div className="mt-4 border-t border-[var(--hairline-soft)] pt-3">
+            <p className="label mb-2">Preview a plan (this device only)</p>
+            <div className="flex flex-wrap gap-2">
+              {ALL_TIERS.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setTier(option)}
+                  className={`chip text-xs ${tier === option ? "chip-active" : ""}`}
+                >
+                  {PLANS.find((plan) => plan.tier === option)?.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </article>
 
-      <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Auth</h2>
+      <article className="card">
+        <h2 className="h-display text-xl">Account</h2>
         {authEnabled ? (
           <>
-            <p className="mt-1 text-xs text-slate-300">
-              Signed in as: {authSession.user?.email ?? "guest"}
-              {authSession.loading ? " (syncing session...)" : ""}
+            <p className="mt-1.5 text-xs text-ink-muted">
+              {authSession.user?.email
+                ? `Signed in as ${authSession.user.email}`
+                : "Sign in to keep your library with you on every device."}
+              {authSession.loading ? " · syncing" : ""}
             </p>
-            <div className="mt-2 grid grid-cols-1 gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="email@domain.com"
-                className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="password"
-                className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
-              />
-            </div>
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={() => void signIn()}
-                className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => void signUp()}
-                className="rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-200"
-              >
-                Sign Up
-              </button>
-              <button
-                onClick={() => void signOut()}
-                className="rounded-lg bg-rose-500/80 px-3 py-2 text-xs text-white"
-              >
-                Sign Out
-              </button>
+            {!authSession.user?.email ? (
+              <div className="mt-3 space-y-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="field"
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Password"
+                  className="field"
+                />
+              </div>
+            ) : null}
+            <div className="mt-3 flex gap-2">
+              {!authSession.user?.email ? (
+                <>
+                  <button onClick={() => void signIn()} className="btn-gold text-xs">
+                    Sign In
+                  </button>
+                  <button onClick={() => void signUp()} className="btn-quiet text-xs">
+                    Create Account
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => void signOut()} className="btn-quiet text-xs">
+                  Sign Out
+                </button>
+              )}
             </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-slate-300">
-            Supabase public env vars are not set in this environment. Auth form will activate when
-            `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are configured.
+          <p className="mt-2 text-xs text-ink-muted">
+            Accounts open soon. Until then, your library lives safely on this device.
           </p>
         )}
-        {authMessage ? <p className="mt-2 text-xs text-cyan-100">{authMessage}</p> : null}
+        {authMessage ? <p className="mt-2 text-xs text-gold-bright">{authMessage}</p> : null}
       </article>
 
-      <article className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-200">
-        <h2 className="text-sm font-semibold text-cyan-100">Metrics</h2>
-        <p className="mt-2">Total sessions: {metrics.totalSessions}</p>
-        <p>Current streak: {metrics.currentStreak} days</p>
+      <article className="card">
+        <h2 className="h-display text-xl">Your listening</h2>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-[var(--hairline-soft)] p-4 text-center">
+            <p className="hz-readout text-3xl text-gold-bright">{metrics.totalSessions}</p>
+            <p className="mt-1 text-xs text-ink-muted">sessions completed</p>
+          </div>
+          <div className="rounded-2xl border border-[var(--hairline-soft)] p-4 text-center">
+            <p className="hz-readout text-3xl text-gold-bright">{metrics.currentStreak}</p>
+            <p className="mt-1 text-xs text-ink-muted">day streak</p>
+          </div>
+        </div>
       </article>
 
-      <div className="rounded-2xl border border-amber-400/30 bg-amber-100/10 p-4 text-sm text-amber-100">
-        Founders Lifetime deadline: March 31, 2026 11:59 PM PT ({foundersUtc})
-      </div>
-
-      <Link
-        href="/pricing"
-        className="inline-block rounded-lg bg-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950"
-      >
-        Manage Plan
-      </Link>
+      <p className="text-center text-[11px] text-ink-faint">
+        <Link href="/faq" className="hover:text-ink-muted">
+          Questions
+        </Link>
+        {" · "}
+        <Link href="/legal/terms" className="hover:text-ink-muted">
+          Terms
+        </Link>
+        {" · "}
+        <Link href="/legal/privacy" className="hover:text-ink-muted">
+          Privacy
+        </Link>
+        {" · "}
+        <Link href="/legal/disclaimer" className="hover:text-ink-muted">
+          Wellness note
+        </Link>
+      </p>
     </section>
   );
 }

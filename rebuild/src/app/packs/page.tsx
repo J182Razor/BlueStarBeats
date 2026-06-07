@@ -7,6 +7,7 @@ import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 interface PackItem {
   code: string;
   name: string;
+  description: string;
   priceLabel: string;
   priceId: string;
 }
@@ -18,9 +19,27 @@ interface TipItem {
 }
 
 const PACKS: PackItem[] = [
-  { code: "pack_sleep", name: "Sleep Protocol Pack", priceLabel: "$19", priceId: "price_pack_sleep" },
-  { code: "pack_focus", name: "Focus Protocol Pack", priceLabel: "$29", priceId: "price_pack_focus" },
-  { code: "pack_performance", name: "Performance Pack", priceLabel: "$49", priceId: "price_pack_performance" },
+  {
+    code: "pack_sleep",
+    name: "Sleep Protocol Pack",
+    description: "Nine delta descents for falling asleep and staying there, 20 to 60 minutes.",
+    priceLabel: "$19",
+    priceId: "price_pack_sleep",
+  },
+  {
+    code: "pack_focus",
+    name: "Focus Protocol Pack",
+    description: "Twelve beta and gamma sessions for deep work blocks, 25 to 90 minutes.",
+    priceLabel: "$29",
+    priceId: "price_pack_focus",
+  },
+  {
+    code: "pack_performance",
+    name: "Performance Pack",
+    description: "The complete cycle: morning clarity, afternoon drive, evening release.",
+    priceLabel: "$49",
+    priceId: "price_pack_performance",
+  },
 ];
 
 const TIPS: TipItem[] = [
@@ -41,14 +60,14 @@ function getLocalUserId() {
 }
 
 export default function PacksPage() {
-  const { entitlements, tier } = usePlanTier();
+  const { entitlements } = usePlanTier();
   const [status, setStatus] = useState<string | null>(null);
   const [purchased, setPurchased] = useLocalStorageState<string[]>(PURCHASED_PACKS_KEY, []);
   const [tipsSent, setTipsSent] = useLocalStorageState<string[]>("bsb_tip_purchases", []);
 
   async function checkoutPack(pack: PackItem) {
     if (entitlements.canAccessPacks) {
-      setStatus(`Included on ${tier.toUpperCase()}. No purchase required.`);
+      setStatus("Your plan already includes every pack.");
       return;
     }
 
@@ -69,7 +88,7 @@ export default function PacksPage() {
       window.location.href = data.url;
     } catch {
       setPurchased((current) => (current.includes(pack.code) ? current : [...current, pack.code]));
-      setStatus(`Stripe not configured. ${pack.name} marked purchased in demo mode.`);
+      setStatus(`Checkout is in preview here, so ${pack.name} was added locally.`);
     }
   }
 
@@ -91,33 +110,37 @@ export default function PacksPage() {
       window.location.href = data.url;
     } catch {
       setTipsSent((current) => (current.includes(tip.code) ? current : [...current, tip.code]));
-      setStatus(`Stripe not configured. ${tip.label} creator tip recorded in demo mode.`);
+      setStatus(`Checkout is in preview here, so your ${tip.label} thank-you was noted locally.`);
     }
   }
 
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
-      <h1 className="font-display text-2xl font-semibold text-white">Protocol Packs</h1>
-      <p className="text-sm text-slate-200/80">
-        One-time packs ($19-$49). Elite and Founders include all packs automatically.
-      </p>
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
+      <header>
+        <h1 className="h-display text-[1.75rem]">Protocol packs</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Crafted collections, bought once and owned outright. Inner Circle and Founding Members
+          have them all included.
+        </p>
+      </header>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {PACKS.map((pack) => {
           const owned = entitlements.canAccessPacks || purchased.includes(pack.code);
           return (
-            <article key={pack.code} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between gap-3">
+            <article key={pack.code} className="card">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">{pack.name}</h2>
-                  <p className="text-xs text-slate-300">{pack.priceLabel} one-time</p>
+                  <h2 className="h-display text-xl">{pack.name}</h2>
+                  <p className="mt-1 text-sm text-ink-muted">{pack.description}</p>
+                  <p className="mt-1.5 text-xs text-gold-bright">{pack.priceLabel} · once, yours forever</p>
                 </div>
                 <button
                   onClick={() => void checkoutPack(pack)}
                   disabled={owned}
-                  className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 disabled:bg-slate-700 disabled:text-slate-200"
+                  className="btn-gold shrink-0 px-4 py-2 text-xs"
                 >
-                  {owned ? "Owned" : "Buy"}
+                  {owned ? "Owned" : "Own It"}
                 </button>
               </div>
             </article>
@@ -125,30 +148,24 @@ export default function PacksPage() {
         })}
       </div>
 
-      <article className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-200">
-        <h2 className="text-sm font-semibold text-cyan-100">Creator Tips</h2>
-        <p className="mt-1">Send a one-time creator tip.</p>
+      <article className="card">
+        <h2 className="h-display text-xl">Thank a creator</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          A one-time gesture for someone whose frequencies carried you somewhere good.
+        </p>
         <div className="mt-3 flex gap-2">
           {TIPS.map((tip) => {
             const sent = tipsSent.includes(tip.code);
             return (
-              <button
-                key={tip.code}
-                onClick={() => void sendTip(tip)}
-                className="rounded-lg bg-cyan-400/20 px-3 py-2 text-xs font-semibold text-cyan-100"
-              >
-                {sent ? `${tip.label} Sent` : `Tip ${tip.label}`}
+              <button key={tip.code} onClick={() => void sendTip(tip)} className="btn-quiet text-xs">
+                {sent ? `${tip.label} sent` : tip.label}
               </button>
             );
           })}
         </div>
       </article>
 
-      {status ? (
-        <p className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 p-3 text-xs text-cyan-100">
-          {status}
-        </p>
-      ) : null}
+      {status ? <p className="card-gold text-xs">{status}</p> : null}
     </section>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePlanTier } from "@/hooks/use-plan-tier";
-import { FOUNDERS_CAP, FOUNDERS_DEADLINE, PLANS, type PlanTier } from "@/lib/plans";
+import { FoundersBanner } from "@/components/monetization/founders-banner";
+import { PLANS, type PlanTier } from "@/lib/plans";
 
 const APP_USER_ID_KEY = "bsb_demo_user_id";
 
@@ -18,45 +19,6 @@ export default function PricingPage() {
   const { tier, setTier } = usePlanTier();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [now, setNow] = useState(0);
-  const [foundersRemaining, setFoundersRemaining] = useState<number>(FOUNDERS_CAP);
-
-  useEffect(() => {
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 60000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadStatus = async () => {
-      try {
-        const response = await fetch("/api/founders/status", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as { remaining?: number };
-        if (active && typeof data.remaining === "number") {
-          setFoundersRemaining(Math.max(0, data.remaining));
-        }
-      } catch {
-        // Keep static fallback.
-      }
-    };
-
-    void loadStatus();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const foundersCountdown = (() => {
-    if (!now) return "Calculating...";
-    const ms = FOUNDERS_DEADLINE.getTime() - now;
-    if (ms <= 0) return "Offer ended";
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    return `${hours}h ${minutes}m`;
-  })();
 
   async function startCheckout(nextTier: PlanTier, billing: "monthly" | "yearly" | "lifetime") {
     setLoadingTier(nextTier);
@@ -81,72 +43,65 @@ export default function PricingPage() {
     } catch {
       // Local fallback for dev preview without Stripe env configuration.
       setTier(nextTier);
-      setStatus(`Stripe not configured locally. Applied ${nextTier.toUpperCase()} in demo mode.`);
+      setStatus("Checkout is in preview here, so your plan switched locally instead.");
     } finally {
       setLoadingTier(null);
     }
   }
 
+  const currentPlanName = PLANS.find((plan) => plan.tier === tier)?.name ?? "Free";
+
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
       <header>
-        <h1 className="font-display text-2xl font-semibold text-white">Pricing</h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Day-1 monetization: subscriptions, one-time founders offer, packs, and gated imports.
+        <h1 className="h-display text-[1.75rem]">Pay for depth, not the instrument</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Every frequency stays free, forever. Premium is for the practice that grows around them.
         </p>
-        <p className="mt-2 text-xs text-cyan-100">
-          Current plan: <span className="font-semibold uppercase">{tier}</span>
-        </p>
+        <p className="mt-2 text-xs text-gold-bright">You are on {currentPlanName}.</p>
       </header>
 
-      <div className="rounded-2xl border border-amber-300/35 bg-amber-100/10 p-4 text-sm text-amber-100">
-        <p className="font-semibold">Founders Lifetime · $149 one-time</p>
-        <p className="mt-1">
-          Cap: {FOUNDERS_CAP} users. Deadline: March 31, 2026 11:59 PM PT.
-        </p>
-        <p className="mt-1 text-xs">Remaining slots: {foundersRemaining}</p>
-        <p className="mt-1 text-xs">Countdown snapshot: {foundersCountdown} remaining.</p>
-      </div>
+      <FoundersBanner />
 
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {PLANS.map((plan) => (
-          <article key={plan.tier} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl text-white">{plan.name}</h2>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">
-                {plan.priceLabel}
-              </span>
+          <article key={plan.tier} className={plan.tier === "pro" ? "card-gold" : "card"}>
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="h-display text-2xl">{plan.name}</h2>
+              <span className="shrink-0 text-sm text-gold-bright">{plan.priceLabel}</span>
             </div>
-            <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-slate-200/80">
+            <ul className="mt-3 space-y-1.5 text-sm text-ink-muted">
               {plan.highlights.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item} className="flex gap-2.5">
+                  <span aria-hidden="true" className="text-gold">
+                    ·
+                  </span>
+                  {item}
+                </li>
               ))}
             </ul>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {plan.tier === "free" ? (
-                <button
-                  onClick={() => setTier("free")}
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-100"
-                >
-                  Keep Free
+                <button onClick={() => setTier("free")} className="btn-quiet text-xs">
+                  Stay Free
                 </button>
               ) : null}
 
               {plan.tier === "pro" ? (
                 <>
                   <button
-                    onClick={() => void startCheckout("pro", "monthly")}
-                    disabled={loadingTier !== null}
-                    className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60"
-                  >
-                    {loadingTier === "pro" ? "Loading..." : "Pro Monthly"}
-                  </button>
-                  <button
                     onClick={() => void startCheckout("pro", "yearly")}
                     disabled={loadingTier !== null}
-                    className="rounded-lg bg-cyan-400/25 px-3 py-2 text-xs text-cyan-100 disabled:opacity-60"
+                    className="btn-gold text-xs"
                   >
-                    Pro Yearly
+                    {loadingTier === "pro" ? "One moment" : "Yearly · $99"}
+                  </button>
+                  <button
+                    onClick={() => void startCheckout("pro", "monthly")}
+                    disabled={loadingTier !== null}
+                    className="btn-quiet text-xs"
+                  >
+                    Monthly · $12
                   </button>
                 </>
               ) : null}
@@ -154,18 +109,18 @@ export default function PricingPage() {
               {plan.tier === "elite" ? (
                 <>
                   <button
-                    onClick={() => void startCheckout("elite", "monthly")}
-                    disabled={loadingTier !== null}
-                    className="rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60"
-                  >
-                    {loadingTier === "elite" ? "Loading..." : "Elite Monthly"}
-                  </button>
-                  <button
                     onClick={() => void startCheckout("elite", "yearly")}
                     disabled={loadingTier !== null}
-                    className="rounded-lg bg-cyan-400/25 px-3 py-2 text-xs text-cyan-100 disabled:opacity-60"
+                    className="btn-gold text-xs"
                   >
-                    Elite Yearly
+                    {loadingTier === "elite" ? "One moment" : "Yearly · $299"}
+                  </button>
+                  <button
+                    onClick={() => void startCheckout("elite", "monthly")}
+                    disabled={loadingTier !== null}
+                    className="btn-quiet text-xs"
+                  >
+                    Monthly · $39
                   </button>
                 </>
               ) : null}
@@ -174,9 +129,9 @@ export default function PricingPage() {
                 <button
                   onClick={() => void startCheckout("founders", "lifetime")}
                   disabled={loadingTier !== null}
-                  className="rounded-lg bg-amber-300 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60"
+                  className="btn-gold text-xs"
                 >
-                  Claim Founders
+                  {loadingTier === "founders" ? "One moment" : "Become a Founding Member"}
                 </button>
               ) : null}
             </div>
@@ -184,22 +139,31 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <article className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200/85">
-        <h3 className="font-semibold text-cyan-100">Paywall Trigger Wiring</h3>
-        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
-          <li>After session #2: prompt preset-saving upgrade.</li>
-          <li>After session #3: prompt ad-free + unlimited upgrade.</li>
-          <li>4th waypoint attempt: blocked on Free in Programs builder.</li>
-          <li>Marketplace import: blocked unless Pro/Elite/Founders.</li>
-          <li>7-day streak: annual prompt shown from Player metrics.</li>
+      <article className="card text-sm text-ink-muted">
+        <h3 className="h-display text-lg text-ink">Our promises</h3>
+        <ul className="mt-2 space-y-1.5">
+          <li className="flex gap-2.5">
+            <span aria-hidden="true" className="text-gold">
+              ·
+            </span>
+            What is free today stays free. We will never move it behind a paywall.
+          </li>
+          <li className="flex gap-2.5">
+            <span aria-hidden="true" className="text-gold">
+              ·
+            </span>
+            No card needed to use the free plan, and no surprise charges.
+          </li>
+          <li className="flex gap-2.5">
+            <span aria-hidden="true" className="text-gold">
+              ·
+            </span>
+            Cancel any time from your account page. It takes one tap, not an email.
+          </li>
         </ul>
       </article>
 
-      {status ? (
-        <p className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 p-3 text-xs text-cyan-100">
-          {status}
-        </p>
-      ) : null}
+      {status ? <p className="card-gold text-xs">{status}</p> : null}
     </section>
   );
 }

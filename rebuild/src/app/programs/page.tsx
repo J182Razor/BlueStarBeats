@@ -17,6 +17,7 @@ import {
   clampVolume,
   getHighFrequencyWarning,
 } from "@/lib/audio/limits";
+import { getBand } from "@/lib/audio/bands";
 import { DEFAULT_AUDIO_SETTINGS, type AudioSettings } from "@/lib/audio/types";
 import type { GoalTag, ProgramRecord, ProgramWaypoint } from "@/lib/domain";
 import { generateId } from "@/lib/id";
@@ -41,11 +42,11 @@ function wait(ms: number) {
 export default function ProgramsPage() {
   const engineRef = useRef(new BrainwaveAudioEngine(DEFAULT_AUDIO_SETTINGS));
   const abortRef = useRef(false);
+  const unlockedRef = useRef(false);
 
-  const { tier: guestTier, entitlements: guestEntitlements } = usePlanTier();
+  const { entitlements: guestEntitlements } = usePlanTier();
   const authSession = useAuthSession();
   const usingRemote = authSession.authenticated;
-  const tier = usingRemote ? authSession.tier : guestTier;
   const entitlements = usingRemote ? authSession.entitlements : guestEntitlements;
 
   const [localPrograms, setLocalPrograms] = useLocalStorageState<ProgramRecord[]>(PROGRAMS_STORAGE_KEY, []);
@@ -55,7 +56,6 @@ export default function ProgramsPage() {
   const programs = usingRemote ? remotePrograms : localPrograms;
 
   const [runningProgramId, setRunningProgramId] = useState<string | null>(null);
-  const [runnerUnlocked, setRunnerUnlocked] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const [name, setName] = useState("");
@@ -85,7 +85,7 @@ export default function ProgramsPage() {
         const data = (await response.json()) as { programs?: ProgramRecord[] };
         if (active) setRemotePrograms(data.programs ?? []);
       } catch {
-        if (active) setMessage("Could not load programs from Supabase.");
+        if (active) setMessage("Your synced journeys could not be reached just now.");
       } finally {
         if (active) setLoadingRemote(false);
       }
@@ -97,14 +97,9 @@ export default function ProgramsPage() {
     };
   }, [usingRemote]);
 
-  async function unlockRunner() {
-    await engineRef.current.unlock();
-    setRunnerUnlocked(true);
-  }
-
   function addWaypoint() {
     if (waypoints.length >= entitlements.maxWaypoints) {
-      setMessage("Waypoint cap reached for current plan. Upgrade to add more waypoints.");
+      setMessage("The free plan allows three phases per journey. Premium opens the path.");
       return;
     }
 
@@ -145,7 +140,7 @@ export default function ProgramsPage() {
 
   async function saveProgram() {
     if (!name.trim()) {
-      setMessage("Program name is required.");
+      setMessage("Give your journey a name first.");
       return;
     }
 
@@ -181,29 +176,29 @@ export default function ProgramsPage() {
         const data = (await response.json()) as { ok?: boolean; message?: string; program?: ProgramRecord; code?: string };
         if (!response.ok || !data.program) {
           if (data.code === "waypoint_limit_reached") {
-            setMessage("Waypoint count exceeds current plan limit.");
+            setMessage("That journey has more phases than your plan allows.");
           } else {
-            setMessage(data.message ?? "Program save blocked.");
+            setMessage(data.message ?? "That journey could not be saved.");
           }
           return;
         }
 
         setRemotePrograms((current) => [data.program!, ...current]);
-        setMessage(`Saved "${data.program.name}" to Supabase.`);
+        setMessage(`"${data.program.name}" saved to your journeys.`);
         return;
       } catch {
-        setMessage("Could not save program to Supabase.");
+        setMessage("That journey could not be saved just now.");
         return;
       }
     }
 
     if (programs.length >= entitlements.maxPrograms) {
-      setMessage("Program limit reached on current plan.");
+      setMessage("The free plan holds one journey. Premium holds as many as you can dream.");
       return;
     }
 
     if (normalizedWaypoints.length > entitlements.maxWaypoints) {
-      setMessage("Waypoint count exceeds current plan limit.");
+      setMessage("That journey has more phases than the free plan allows.");
       return;
     }
 
@@ -216,7 +211,7 @@ export default function ProgramsPage() {
     };
 
     setLocalPrograms((current) => [next, ...current]);
-    setMessage(`Saved "${next.name}" with ${next.waypoints.length} waypoints.`);
+    setMessage(`"${next.name}" saved with ${next.waypoints.length} phases.`);
   }
 
   async function removeProgram(id: string) {
@@ -225,12 +220,12 @@ export default function ProgramsPage() {
         const response = await fetch(`/api/programs?id=${id}`, { method: "DELETE" });
         if (!response.ok) {
           const data = (await response.json()) as { message?: string };
-          setMessage(data.message ?? "Delete failed.");
+          setMessage(data.message ?? "That journey could not be removed.");
           return;
         }
         setRemotePrograms((current) => current.filter((program) => program.id !== id));
       } catch {
-        setMessage("Could not delete program.");
+        setMessage("That journey could not be removed just now.");
       }
       return;
     }
@@ -239,14 +234,14 @@ export default function ProgramsPage() {
   }
 
   async function runProgram(program: ProgramRecord) {
-    if (!runnerUnlocked) {
-      setMessage("Tap “Unlock Audio Runner” first.");
-      return;
+    if (!unlockedRef.current) {
+      await engineRef.current.unlock();
+      unlockedRef.current = true;
     }
 
     abortRef.current = false;
     setRunningProgramId(program.id);
-    setMessage(`Running "${program.name}"...`);
+    setMessage(`"${program.name}" has begun.`);
 
     try {
       await engineRef.current.start(toAudioSettings(program.waypoints[0]));
@@ -282,9 +277,9 @@ export default function ProgramsPage() {
       }
 
       await engineRef.current.stop();
-      setMessage(`Completed "${program.name}".`);
+      setMessage(`"${program.name}" is complete.`);
     } catch (error) {
-      const text = error instanceof Error ? error.message : "Program playback failed.";
+      const text = error instanceof Error ? error.message : "The journey could not continue.";
       setMessage(text);
     } finally {
       setRunningProgramId(null);
@@ -295,60 +290,43 @@ export default function ProgramsPage() {
     abortRef.current = true;
     await engineRef.current.stop();
     setRunningProgramId(null);
-    setMessage("Program stopped.");
+    setMessage("Journey ended early. The silence is yours.");
   }
 
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
       <header>
-        <h1 className="font-display text-2xl font-semibold text-white">Programs</h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Tier <span className="font-semibold">{tier}</span>: {" "}
-          {entitlements.maxPrograms === 9999
-            ? "Unlimited programs and waypoints."
-            : `${entitlements.maxPrograms} program + ${entitlements.maxWaypoints} waypoints limit.`}
-        </p>
-        <p className="mt-1 text-xs text-slate-300">
-          Source: {usingRemote ? "Supabase authenticated storage" : "Local guest storage"}
+        <h1 className="h-display text-[1.75rem]">Journeys</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Multi-phase sessions that guide you down, hold you there, and bring you back.
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={unlockRunner}
-          className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
-        >
-          Unlock Audio Runner
+      {runningProgramId ? (
+        <button onClick={() => void stopProgram()} className="btn-quiet w-full text-warn">
+          End Journey
         </button>
-        {runningProgramId ? (
-          <button
-            onClick={() => void stopProgram()}
-            className="rounded-xl bg-rose-500/80 px-3 py-2 text-xs font-semibold text-white"
-          >
-            Stop Program
-          </button>
-        ) : null}
-      </div>
+      ) : null}
 
-      <article className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Build Program</h2>
+      <article className="card space-y-4">
+        <h2 className="h-display text-xl">Design a journey</h2>
 
-        <label className="block space-y-1 text-xs text-slate-300">
-          Program Name
+        <label className="label space-y-1.5">
+          Name
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Wind Down Sequence"
-            className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
+            placeholder="Evening Descent"
+            className="field"
           />
         </label>
 
-        <label className="block space-y-1 text-xs text-slate-300">
-          Goal Tag
+        <label className="label space-y-1.5">
+          Intention
           <select
             value={goalTag}
             onChange={(event) => setGoalTag(event.target.value as GoalTag)}
-            className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
+            className="field"
           >
             {GOAL_TAGS.map((tag) => (
               <option key={tag} value={tag}>
@@ -358,21 +336,29 @@ export default function ProgramsPage() {
           </select>
         </label>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {waypoints.map((waypoint, index) => (
-            <div key={waypoint.id} className="rounded-xl border border-white/10 bg-slate-900/70 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-100">Waypoint {index + 1}</p>
+            <div
+              key={waypoint.id}
+              className="rounded-2xl border border-[var(--hairline-soft)] bg-[rgba(11,9,18,0.45)] p-4"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-gold-bright">
+                  Phase {index + 1}
+                  <span className="ml-2 text-[11px] text-ink-faint">
+                    {getBand(waypoint.entrainmentHz).name.toLowerCase()} territory
+                  </span>
+                </p>
                 {waypoints.length > 1 ? (
                   <button
                     onClick={() => removeWaypoint(waypoint.id)}
-                    className="text-[11px] text-rose-200"
+                    className="text-[11px] text-ink-faint hover:text-warn"
                   >
                     Remove
                   </button>
                 ) : null}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <SmallNumber
                   label="Minutes"
                   value={waypoint.durationMinutes}
@@ -390,7 +376,7 @@ export default function ProgramsPage() {
                   onChange={(value) => updateWaypoint(waypoint.id, { carrierHz: value })}
                 />
                 <SmallNumber
-                  label="Entrain Hz"
+                  label="Beat Hz"
                   value={waypoint.entrainmentHz}
                   step={0.1}
                   min={ENTRAINMENT_MIN_HZ}
@@ -406,13 +392,13 @@ export default function ProgramsPage() {
                   onChange={(value) => updateWaypoint(waypoint.id, { volume: value })}
                 />
                 <SmallSelect
-                  label="Mode"
+                  label="Method"
                   value={waypoint.mode}
                   options={["binaural", "isochronic"]}
                   onChange={(value) => updateWaypoint(waypoint.id, { mode: value })}
                 />
                 <SmallSelect
-                  label="Transition"
+                  label="Arrival"
                   value={waypoint.transitionType}
                   options={["step", "ramp"]}
                   onChange={(value) => updateWaypoint(waypoint.id, { transitionType: value })}
@@ -423,66 +409,68 @@ export default function ProgramsPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={addWaypoint}
-            className="rounded-xl bg-slate-800 px-3 py-2 text-xs text-slate-200"
-          >
-            Add Waypoint
+          <button onClick={addWaypoint} className="btn-quiet text-xs">
+            Add Phase
           </button>
-          <button
-            onClick={() => void saveProgram()}
-            className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
-          >
-            Save Program
+          <button onClick={() => void saveProgram()} className="btn-gold text-xs">
+            Save Journey
           </button>
         </div>
 
-        {message ? <p className="text-xs text-cyan-100">{message}</p> : null}
+        {message ? <p className="text-xs text-gold-bright">{message}</p> : null}
         {waypoints.some((waypoint) => waypoint.carrierHz >= HIGH_FREQUENCY_WARNING_HZ) ? (
-          <p className="rounded-lg border border-rose-300/35 bg-rose-950/30 px-3 py-2 text-[11px] text-rose-100">
+          <p className="rounded-xl border border-[rgba(217,141,141,0.3)] px-3 py-2 text-[11px] text-warn">
             {getHighFrequencyWarning(waypoints.reduce((max, waypoint) => Math.max(max, waypoint.carrierHz), 0))}
           </p>
         ) : null}
       </article>
 
       {waypoints.length >= entitlements.maxWaypoints && entitlements.maxWaypoints !== 9999 ? (
-        <div className="rounded-2xl border border-amber-300/35 bg-amber-100/10 p-4 text-sm text-amber-100">
-          <p>Trying to add a 4th waypoint is blocked on Free. Upgrade to continue building.</p>
-          <Link href="/pricing" className="mt-2 inline-block rounded-lg bg-amber-200/20 px-3 py-1">
-            Upgrade Plan
+        <div className="card-gold text-sm">
+          <p>Longer journeys, with as many phases as the night requires, come with Premium.</p>
+          <Link href="/pricing" className="btn-quiet mt-3 text-xs">
+            See Premium
           </Link>
         </div>
       ) : null}
 
-      <article className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Saved Programs ({programs.length})</h2>
-        {loadingRemote ? <p className="text-xs text-slate-400">Loading from Supabase...</p> : null}
+      <article className="card space-y-3">
+        <h2 className="h-display text-xl">
+          Saved journeys <span className="text-ink-faint">({programs.length})</span>
+        </h2>
+        {loadingRemote ? <p className="text-xs text-ink-faint">Gathering your journeys…</p> : null}
         {programs.length === 0 && !loadingRemote ? (
-          <p className="text-xs text-slate-400">No programs saved yet.</p>
+          <p className="text-sm text-ink-faint">
+            No journeys yet. Design one above, phase by phase.
+          </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {programs.map((program) => (
-              <li key={program.id} className="rounded-xl border border-white/10 bg-slate-900/70 p-3">
+              <li
+                key={program.id}
+                className="rounded-2xl border border-[var(--hairline-soft)] bg-[rgba(11,9,18,0.45)] p-4"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-white">{program.name}</h3>
-                    <p className="text-xs text-slate-300">
-                      {program.goalTag} · {program.waypoints.length} waypoints
+                    <h3 className="text-[15px] font-medium text-ink">{program.name}</h3>
+                    <p className="mt-0.5 text-xs text-ink-faint">
+                      {program.goalTag} · {program.waypoints.length} phases ·{" "}
+                      {program.waypoints.reduce((sum, w) => sum + w.durationMinutes, 0)} min
                     </p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex shrink-0 gap-2">
                     <button
                       onClick={() => void runProgram(program)}
                       disabled={runningProgramId !== null}
-                      className="rounded-lg bg-cyan-400/20 px-2 py-1 text-xs text-cyan-100 disabled:opacity-50"
+                      className="btn-gold px-4 py-1.5 text-xs"
                     >
-                      {runningProgramId === program.id ? "Running..." : "Run"}
+                      {runningProgramId === program.id ? "In motion" : "Begin"}
                     </button>
                     <button
                       onClick={() => void removeProgram(program.id)}
-                      className="rounded-lg bg-rose-400/20 px-2 py-1 text-xs text-rose-100"
+                      className="text-[11px] text-ink-faint hover:text-warn"
                     >
-                      Delete
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -506,7 +494,7 @@ interface SmallNumberProps {
 
 function SmallNumber({ label, value, step, min, max, onChange }: SmallNumberProps) {
   return (
-    <label className="space-y-1 text-[11px] text-slate-300">
+    <label className="label space-y-1.5">
       <span>{label}</span>
       <input
         type="number"
@@ -518,7 +506,7 @@ function SmallNumber({ label, value, step, min, max, onChange }: SmallNumberProp
           const next = Number(event.target.value);
           if (Number.isFinite(next)) onChange(next);
         }}
-        className="w-full rounded-md border border-white/15 bg-slate-900/80 px-2 py-1 text-xs text-white"
+        className="field"
       />
     </label>
   );
@@ -533,12 +521,12 @@ interface SmallSelectProps<T extends string> {
 
 function SmallSelect<T extends string>({ label, value, options, onChange }: SmallSelectProps<T>) {
   return (
-    <label className="space-y-1 text-[11px] text-slate-300">
+    <label className="label space-y-1.5">
       <span>{label}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="w-full rounded-md border border-white/15 bg-slate-900/80 px-2 py-1 text-xs text-white"
+        className="field"
       >
         {options.map((option) => (
           <option key={option} value={option}>

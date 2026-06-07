@@ -1,25 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #080d1a;
-  --surface: #111a31;
-  --foreground: #e6f4ff;
-  --muted: #96abc0;
-  --accent: #5be2ff;
+  --bg: #0b0912;
+  --bg-raised: #131020;
+  --ink: #f4eee1;
+  --ink-muted: #a89fb8;
+  --ink-faint: #756c87;
+  --gold: #d4af74;
+  --gold-bright: #ecd3a3;
+  --gold-deep: #8f7340;
+  --hairline: rgba(212, 175, 116, 0.18);
+  --hairline-soft: rgba(244, 238, 225, 0.08);
+  --veil: rgba(244, 238, 225, 0.04);
+  --warn: #d98d8d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-mono: "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
-  --font-display: var(--font-display);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-deep: var(--gold-deep);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-cormorant);
+  --font-mono: "ui-monospace", "SFMono-Regular", "Menlo", monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-outfit), "Segoe UI", sans-serif;
   min-height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom);
   -webkit-font-smoothing: antialiased;
@@ -36,22 +50,272 @@ select {
   font: inherit;
 }
 
+::selection {
+  background: rgba(212, 175, 116, 0.35);
+}
+
+.night-sky {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, #221a3a 0%, #14101f 45%, #0b0912 100%);
+  position: relative;
+}
+
+.night-sky::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(244, 238, 225, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 9%, rgba(244, 238, 225, 0.38) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 55% 24%, rgba(236, 211, 163, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 31% 7%, rgba(244, 238, 225, 0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 31%, rgba(244, 238, 225, 0.26) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 67% 15%, rgba(212, 175, 116, 0.33) 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 33%, rgba(244, 238, 225, 0.2) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 11%, rgba(244, 238, 225, 0.34) 50%, transparent 51%);
+  opacity: 0.8;
+}
+
+.card {
+  border: 1px solid var(--hairline-soft);
+  background: var(--veil);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+.card-gold {
+  border: 1px solid var(--hairline);
+  background: linear-gradient(160deg, rgba(212, 175, 116, 0.09), rgba(212, 175, 116, 0.02));
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.h-display {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.12;
+}
+
+.hz-readout {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #b8945c);
+  color: #211a0e;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.btn-gold:hover {
+  filter: brightness(1.06);
+}
+
+.btn-gold:active {
+  transform: scale(0.98);
+}
+
+.btn-gold:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--gold-bright);
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.65rem 1.35rem;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.btn-quiet:hover {
+  background: rgba(212, 175, 116, 0.08);
+}
+
+.btn-quiet:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.chip {
+  border-radius: 9999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--hairline-soft);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.chip:hover {
+  color: var(--ink);
+}
+
+.chip-active {
+  border-color: var(--hairline);
+  background: rgba(212, 175, 116, 0.12);
+  color: var(--gold-bright);
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.875rem;
+  border: 1px solid var(--hairline-soft);
+  background: rgba(11, 9, 18, 0.65);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9375rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.field:focus {
+  border-color: var(--gold);
+}
+
+.field::placeholder {
+  color: var(--ink-faint);
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+
+select.field {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a89fb8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+}
+
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--gold-deep), rgba(244, 238, 225, 0.12));
+}
+
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
+  margin-top: -8.5px;
   width: 20px;
   height: 20px;
   border-radius: 9999px;
-  border: 2px solid #cff8ff;
-  background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(91, 226, 255, 0.2);
+  border: 1px solid var(--gold-bright);
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 60%, var(--gold-deep));
+  box-shadow: 0 0 12px rgba(212, 175, 116, 0.45);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--gold-deep), rgba(244, 238, 225, 0.12));
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 9999px;
-  border: 2px solid #cff8ff;
-  background: var(--accent);
+  border: 1px solid var(--gold-bright);
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 60%, var(--gold-deep));
+  box-shadow: 0 0 12px rgba(212, 175, 116, 0.45);
+}
+
+.orb {
+  position: relative;
+  width: min(58vw, 232px);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  border: 1px solid rgba(212, 175, 116, 0.4);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(236, 211, 163, 0.32) 0%, rgba(212, 175, 116, 0.13) 34%, rgba(34, 26, 58, 0.6) 68%, rgba(11, 9, 18, 0.9) 100%);
+  box-shadow:
+    0 0 60px rgba(212, 175, 116, 0.16),
+    0 0 140px rgba(99, 76, 158, 0.18),
+    inset 0 0 50px rgba(212, 175, 116, 0.1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: box-shadow 600ms ease;
+}
+
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(212, 175, 116, 0.14);
+  pointer-events: none;
+}
+
+.orb-live {
+  box-shadow:
+    0 0 80px rgba(212, 175, 116, 0.3),
+    0 0 180px rgba(99, 76, 158, 0.28),
+    inset 0 0 60px rgba(212, 175, 116, 0.16);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .orb {
+    animation: orb-breathe 7s ease-in-out infinite;
+  }
+
+  .orb-live {
+    animation: orb-breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes orb-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.035);
+    }
+  }
 }
 
 @media (max-width: 390px) {

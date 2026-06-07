@@ -15,6 +15,7 @@ import {
   clampVolume,
   getHighFrequencyWarning,
 } from "@/lib/audio/limits";
+import { getBand } from "@/lib/audio/bands";
 import { DEFAULT_AUDIO_SETTINGS, type AudioMode, type Waveform } from "@/lib/audio/types";
 import type { GoalTag, PresetRecord } from "@/lib/domain";
 import { generateId } from "@/lib/id";
@@ -31,6 +32,7 @@ export default function PresetsPage() {
   const usingRemote = authSession.authenticated;
   const tier = usingRemote ? authSession.tier : guestTier;
   const entitlements = usingRemote ? authSession.entitlements : guestEntitlements;
+  void tier;
 
   const [localPresets, setLocalPresets] = useLocalStorageState<PresetRecord[]>(PRESET_STORAGE_KEY, []);
   const [remotePresets, setRemotePresets] = useState<PresetRecord[]>([]);
@@ -44,6 +46,10 @@ export default function PresetsPage() {
   const [volume, setVolume] = useState(DEFAULT_AUDIO_SETTINGS.volume);
   const [selectedTags, setSelectedTags] = useState<GoalTag[]>(["focus"]);
   const [message, setMessage] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editTags, setEditTags] = useState<GoalTag[]>([]);
 
   const presets = usingRemote ? remotePresets : localPresets;
 
@@ -64,7 +70,7 @@ export default function PresetsPage() {
         const data = (await response.json()) as { presets?: PresetRecord[] };
         if (active) setRemotePresets(data.presets ?? []);
       } catch {
-        if (active) setMessage("Could not load presets from Supabase.");
+        if (active) setMessage("Your synced presets could not be reached just now.");
       } finally {
         if (active) setLoadingRemote(false);
       }
@@ -82,9 +88,15 @@ export default function PresetsPage() {
     );
   }
 
+  function toggleEditTag(tag: GoalTag) {
+    setEditTags((current) =>
+      current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag],
+    );
+  }
+
   async function savePreset() {
     if (!name.trim()) {
-      setMessage("Preset name is required.");
+      setMessage("Give your preset a name first.");
       return;
     }
 
@@ -114,21 +126,21 @@ export default function PresetsPage() {
 
         const data = (await response.json()) as { ok?: boolean; message?: string; preset?: PresetRecord };
         if (!response.ok || !data.preset) {
-          setMessage(data.message ?? "Preset save blocked.");
+          setMessage(data.message ?? "That preset could not be saved.");
           return;
         }
 
         setRemotePresets((current) => [data.preset as PresetRecord, ...current]);
-        setMessage(`Saved "${data.preset.name}" to Supabase.`);
+        setMessage(`"${data.preset.name}" saved to your library.`);
         return;
       } catch {
-        setMessage("Could not save preset to Supabase.");
+        setMessage("That preset could not be saved just now.");
         return;
       }
     }
 
     if (limitReached) {
-      setMessage("Preset limit reached on Free. Upgrade to unlock unlimited saves.");
+      setMessage("The free plan holds three presets. Premium removes the limit.");
       return;
     }
 
@@ -145,7 +157,7 @@ export default function PresetsPage() {
     };
 
     setLocalPresets((current) => [preset, ...current]);
-    setMessage(`Saved "${preset.name}".`);
+    setMessage(`"${preset.name}" saved to your library.`);
   }
 
   function loadPreset(preset: PresetRecord) {
@@ -159,52 +171,54 @@ export default function PresetsPage() {
         volume: preset.volume,
       }),
     );
-    setMessage(`Loaded "${preset.name}" to Player.`);
+    setMessage(`"${preset.name}" is set in the Studio.`);
   }
 
-  async function editPreset(preset: PresetRecord) {
-    const nextName = window.prompt("Preset name", preset.name);
-    if (!nextName) return;
-    const nextTagsInput = window.prompt("Tags (comma separated)", preset.tags.join(","));
-    const nextTags = (nextTagsInput ?? "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean) as GoalTag[];
+  function beginEdit(preset: PresetRecord) {
+    setEditingId(preset.id);
+    setEditName(preset.name);
+    setEditTags(preset.tags);
+  }
+
+  async function commitEdit(preset: PresetRecord) {
+    const nextName = editName.trim();
+    if (!nextName) {
+      setMessage("A preset needs a name.");
+      return;
+    }
+    const nextTags = editTags.length ? editTags : (["custom"] as GoalTag[]);
 
     if (usingRemote) {
       try {
         const response = await fetch("/api/presets", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: preset.id,
-            name: nextName,
-            tags: nextTags,
-          }),
+          body: JSON.stringify({ id: preset.id, name: nextName, tags: nextTags }),
         });
 
         const data = (await response.json()) as { preset?: PresetRecord; message?: string };
         if (!response.ok || !data.preset) {
-          setMessage(data.message ?? "Update failed.");
+          setMessage(data.message ?? "That change could not be saved.");
           return;
         }
 
         setRemotePresets((current) =>
           current.map((item) => (item.id === data.preset!.id ? data.preset! : item)),
         );
-        setMessage(`Updated "${data.preset.name}".`);
       } catch {
-        setMessage("Could not update preset.");
+        setMessage("That change could not be saved just now.");
+        return;
       }
-      return;
+    } else {
+      setLocalPresets((current) =>
+        current.map((item) =>
+          item.id === preset.id ? { ...item, name: nextName, tags: nextTags } : item,
+        ),
+      );
     }
 
-    setLocalPresets((current) =>
-      current.map((item) =>
-        item.id === preset.id ? { ...item, name: nextName, tags: nextTags } : item,
-      ),
-    );
-    setMessage(`Updated "${nextName}".`);
+    setEditingId(null);
+    setMessage(`"${nextName}" updated.`);
   }
 
   async function removePreset(id: string) {
@@ -216,13 +230,13 @@ export default function PresetsPage() {
 
         if (!response.ok) {
           const data = (await response.json()) as { message?: string };
-          setMessage(data.message ?? "Delete failed.");
+          setMessage(data.message ?? "That preset could not be removed.");
           return;
         }
 
         setRemotePresets((current) => current.filter((preset) => preset.id !== id));
       } catch {
-        setMessage("Could not delete preset.");
+        setMessage("That preset could not be removed just now.");
       }
       return;
     }
@@ -231,37 +245,33 @@ export default function PresetsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
       <header>
-        <h1 className="font-display text-2xl font-semibold text-white">Presets</h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Save and recall your best protocols. Tier <span className="font-semibold">{tier}</span>:
-          {" "}
-          {entitlements.maxPresets === 9999 ? "Unlimited presets" : `${entitlements.maxPresets} presets max`}.
-        </p>
-        <p className="mt-1 text-xs text-slate-300">
-          Source: {usingRemote ? "Supabase authenticated storage" : "Local guest storage"}
+        <h1 className="h-display text-[1.75rem]">Your library</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          The frequencies you return to, kept exactly as you tuned them.
+          {usingRemote ? " Synced to your account." : " Stored on this device until you sign in."}
         </p>
       </header>
 
-      <article className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Create Preset</h2>
-        <label className="block space-y-1 text-xs text-slate-300">
+      <article className="card space-y-4">
+        <h2 className="h-display text-xl">Compose a preset</h2>
+        <label className="label space-y-1.5">
           Name
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Night Focus Ramp"
-            className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
+            placeholder="Night Descent"
+            className="field"
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-2">
-          <SelectField<AudioMode> label="Mode" value={mode} onChange={setMode} options={MODES} />
-          <SelectField<Waveform> label="Waveform" value={waveform} onChange={setWaveform} options={WAVEFORMS} />
+        <div className="grid grid-cols-2 gap-3">
+          <SelectField<AudioMode> label="Method" value={mode} onChange={setMode} options={MODES} />
+          <SelectField<Waveform> label="Tone" value={waveform} onChange={setWaveform} options={WAVEFORMS} />
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           <NumberField
             label="Carrier Hz"
             value={carrierHz}
@@ -271,7 +281,7 @@ export default function PresetsPage() {
             onChange={setCarrierHz}
           />
           <NumberField
-            label="Entrain Hz"
+            label="Beat Hz"
             value={entrainmentHz}
             step={0.1}
             min={ENTRAINMENT_MIN_HZ}
@@ -281,89 +291,120 @@ export default function PresetsPage() {
           <NumberField label="Volume" value={volume} step={0.01} min={0.01} max={1} onChange={setVolume} />
         </div>
 
+        <p className="text-[11px] text-ink-faint">
+          {getBand(entrainmentHz).name} territory: {getBand(entrainmentHz).state}.
+        </p>
+
         {getHighFrequencyWarning(carrierHz) ? (
-          <p className="rounded-lg border border-rose-300/35 bg-rose-950/30 px-3 py-2 text-[11px] text-rose-100">
+          <p className="rounded-xl border border-[rgba(217,141,141,0.3)] px-3 py-2 text-[11px] text-warn">
             {getHighFrequencyWarning(carrierHz)}
           </p>
         ) : null}
 
-        <div className="space-y-1">
-          <p className="text-xs text-slate-300">Tags</p>
+        <div className="space-y-1.5">
+          <p className="label">Tags</p>
           <div className="flex flex-wrap gap-2">
-            {TAGS.map((tag) => {
-              const active = selectedTags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`rounded-full px-3 py-1 text-xs ${
-                    active ? "bg-cyan-400/30 text-cyan-100" : "bg-slate-800 text-slate-300"
-                  }`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
+            {TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={`chip text-xs ${selectedTags.includes(tag) ? "chip-active" : ""}`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
 
-        <button
-          onClick={() => void savePreset()}
-          className="w-full rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950"
-        >
-          Save Preset
+        <button onClick={() => void savePreset()} className="btn-gold w-full">
+          Save to Library
         </button>
 
-        {message ? <p className="text-xs text-cyan-100">{message}</p> : null}
+        {message ? <p className="text-xs text-gold-bright">{message}</p> : null}
       </article>
 
-      {limitReached ? (
-        <div className="rounded-2xl border border-amber-300/40 bg-amber-100/10 p-4 text-sm text-amber-100">
-          <p>Free tier reached its preset cap. Upgrade to unlock unlimited saves.</p>
-          <Link href="/pricing" className="mt-3 inline-block rounded-lg bg-amber-200/20 px-3 py-1 font-semibold">
-            Upgrade Plan
+      {limitReached && entitlements.maxPresets !== 9999 ? (
+        <div className="card-gold text-sm">
+          <p>Your free library is full. Premium holds an unlimited collection.</p>
+          <Link href="/pricing" className="btn-quiet mt-3 text-xs">
+            See Premium
           </Link>
         </div>
       ) : null}
 
-      <article className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-sm font-semibold text-cyan-100">Saved Presets ({presets.length})</h2>
-        {loadingRemote ? <p className="text-xs text-slate-400">Loading from Supabase...</p> : null}
+      <article className="card space-y-3">
+        <h2 className="h-display text-xl">
+          Saved presets <span className="text-ink-faint">({presets.length})</span>
+        </h2>
+        {loadingRemote ? <p className="text-xs text-ink-faint">Gathering your library…</p> : null}
         {presets.length === 0 && !loadingRemote ? (
-          <p className="text-xs text-slate-400">No presets saved yet.</p>
+          <p className="text-sm text-ink-faint">
+            Nothing here yet. Tune something in the Studio, then keep it.
+          </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {presets.map((preset) => (
-              <li key={preset.id} className="rounded-xl border border-white/10 bg-slate-900/70 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">{preset.name}</h3>
-                    <p className="text-xs text-slate-300">
-                      {preset.mode} · {preset.waveform} · {preset.carrierHz}Hz · {preset.entrainmentHz}Hz
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-400">{preset.tags.join(", ")}</p>
+              <li
+                key={preset.id}
+                className="rounded-2xl border border-[var(--hairline-soft)] bg-[rgba(11,9,18,0.45)] p-4"
+              >
+                {editingId === preset.id ? (
+                  <div className="space-y-3">
+                    <input
+                      value={editName}
+                      onChange={(event) => setEditName(event.target.value)}
+                      className="field"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {TAGS.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => toggleEditTag(tag)}
+                          className={`chip text-xs ${editTags.includes(tag) ? "chip-active" : ""}`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => void commitEdit(preset)} className="btn-gold flex-1 text-xs">
+                        Save
+                      </button>
+                      <button onClick={() => setEditingId(null)} className="btn-quiet flex-1 text-xs">
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => loadPreset(preset)}
-                      className="rounded-lg bg-cyan-400/20 px-2 py-1 text-[11px] text-cyan-100"
-                    >
-                      Load
-                    </button>
-                    <button
-                      onClick={() => void editPreset(preset)}
-                      className="rounded-lg bg-indigo-400/20 px-2 py-1 text-[11px] text-indigo-100"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => void removePreset(preset.id)}
-                      className="rounded-lg bg-rose-400/20 px-2 py-1 text-[11px] text-rose-100"
-                    >
-                      Delete
-                    </button>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-[15px] font-medium text-ink">{preset.name}</h3>
+                      <p className="hz-readout mt-0.5 text-sm text-gold-bright">
+                        {preset.entrainmentHz} Hz {getBand(preset.entrainmentHz).name.toLowerCase()} ·{" "}
+                        {Math.round(preset.carrierHz)} Hz carrier
+                      </p>
+                      <p className="mt-1 text-[11px] text-ink-faint">
+                        {preset.mode} · {preset.tags.join(", ")}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <button onClick={() => loadPreset(preset)} className="btn-quiet px-3 py-1 text-[11px]">
+                        Tune In
+                      </button>
+                      <div className="flex gap-2 text-[11px] text-ink-faint">
+                        <button onClick={() => beginEdit(preset)} className="hover:text-ink-muted">
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => void removePreset(preset.id)}
+                          className="hover:text-warn"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </li>
             ))}
           </ul>
@@ -382,12 +423,12 @@ interface SelectFieldProps<T extends string> {
 
 function SelectField<T extends string>({ label, value, options, onChange }: SelectFieldProps<T>) {
   return (
-    <label className="space-y-1 text-xs text-slate-300">
+    <label className="label space-y-1.5">
       <span>{label}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
+        className="field"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -410,7 +451,7 @@ interface NumberFieldProps {
 
 function NumberField({ label, value, step, min, max, onChange }: NumberFieldProps) {
   return (
-    <label className="space-y-1 text-xs text-slate-300">
+    <label className="label space-y-1.5">
       <span>{label}</span>
       <input
         type="number"
@@ -422,7 +463,7 @@ function NumberField({ label, value, step, min, max, onChange }: NumberFieldProp
           const next = Number(event.target.value);
           if (Number.isFinite(next)) onChange(next);
         }}
-        className="w-full rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-sm text-white"
+        className="field"
       />
     </label>
   );

@@ -1,48 +1,50 @@
 const FAQ = [
   {
-    question: "How do binaural and isochronic modes differ?",
+    question: "What is the difference between binaural and isochronic?",
     answer:
-      "Binaural sends slightly different tones left/right to create a perceived beat. Isochronic uses one tone pulsed at the target entrainment frequency.",
+      "Binaural plays a slightly different tone in each ear, and your mind perceives the difference as a slow beat. It needs stereo headphones. Isochronic pulses a single tone on and off at the target rate, so it carries over speakers too.",
   },
   {
-    question: "Can I use speakers for binaural mode?",
+    question: "What do the wave names mean?",
     answer:
-      "Use stereo headphones for binaural mode. Isochronic mode can work over speakers, but headphones are still recommended for consistency.",
+      "They are the classic brainwave bands. Delta (0.1 to 4 Hz) is linked with deep sleep, theta (4 to 8 Hz) with meditation, alpha (8 to 13 Hz) with relaxed presence, beta (13 to 30 Hz) with alert focus, and gamma (30 to 40 Hz) with peak concentration. The Studio shows you which territory you are in as you tune.",
   },
   {
-    question: "What is included in Pro vs Elite?",
+    question: "What are the sacred carriers?",
     answer:
-      "Pro removes ads and unlocks unlimited presets/programs plus marketplace import/publish. Elite includes everything in Pro plus protocol packs.",
+      "The six solfeggio tones (396, 417, 528, 639, 741, and 852 Hz), available as one-tap carrier frequencies in the Studio. Many practitioners build their sessions around them.",
   },
   {
-    question: "How do Founders slots work?",
+    question: "What does Premium include?",
     answer:
-      "Founders is a one-time lifetime offer capped at 250 users until March 31, 2026 at 11:59 PM PT.",
+      "Unlimited presets and journeys, no sponsor messages, and the ability to import community work into your library and publish your own. Inner Circle adds every protocol pack. The instrument itself, every frequency, stays free for everyone.",
   },
   {
-    question: "Why do I see a high-frequency warning?",
+    question: "How does Founding Member work?",
     answer:
-      "Carrier frequencies can go up to 20,000 Hz, but many listeners cannot hear above 16,000 Hz and some headphones/speakers may distort or fail to reproduce those tones accurately. Keep volume low and increase gradually.",
+      "One payment of $149 for lifetime Inner Circle access, limited to 250 members. When the seats are gone, they are gone.",
   },
   {
-    question: "Is this a medical treatment app?",
+    question: "Why did I see a listening warning?",
     answer:
-      "No. BlueStarBeats is a wellness and focus tool and does not provide medical diagnosis or treatment.",
+      "Carrier frequencies can reach 20,000 Hz, but most ears cannot hear above 16,000 Hz and some headphones distort up there. Keep volume low and rise gently.",
+  },
+  {
+    question: "Is this a medical treatment?",
+    answer:
+      "No. Blue Star Beats is a wellness and focus practice, not a medical device. It does not diagnose, treat, cure, or prevent any condition. If you have a seizure history or neurological concerns, speak with a professional first.",
   },
 ];
 
 export default function FaqPage() {
   return (
-    <section className="mx-auto w-full max-w-screen-sm px-4 pb-28 pt-4">
-      <h1 className="font-display text-2xl font-semibold text-white">FAQ</h1>
-      <ul className="mt-4 space-y-2">
+    <section className="mx-auto w-full max-w-screen-sm px-5 pb-32 pt-6">
+      <h1 className="h-display text-[1.75rem]">Questions</h1>
+      <ul className="mt-5 space-y-3">
         {FAQ.map((item) => (
-          <li
-            key={item.question}
-            className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200/90"
-          >
-            <p className="font-semibold text-cyan-100">{item.question}</p>
-            <p className="mt-1 text-xs text-slate-300">{item.answer}</p>
+          <li key={item.question} className="card">
+            <p className="h-display text-lg">{item.question}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{item.answer}</p>
           </li>
         ))}
       </ul>

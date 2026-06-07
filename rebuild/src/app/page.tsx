@@ -2,19 +2,11 @@ import { PlayerStudio } from "@/components/player/player-studio";
 
 export default function HomePage() {
   return (
-    <section className="mx-auto w-full max-w-screen-sm px-4 pb-28 pt-4">
-      <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-        <p className="text-xs uppercase tracking-[0.18em] text-cyan-200/80">
-          BlueStarBeats
-        </p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-white">
-          Mobile Brainwave Studio
-        </h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Binaural and isochronic generation with low-latency tuning and
-          gesture-safe playback for iOS Safari and Android Chrome.
-        </p>
-      </div>
+    <section className="mx-auto w-full max-w-screen-sm px-5 pb-32 pt-6">
+      <h1 className="h-display text-[1.75rem]">What are we tuning for?</h1>
+      <p className="mt-1.5 text-sm text-ink-muted">
+        Choose an intention, or shape every frequency yourself.
+      </p>
       <PlayerStudio />
     </section>
   );

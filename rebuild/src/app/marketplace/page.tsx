@@ -7,6 +7,7 @@ import { useLocalStorageState } from "@/hooks/use-local-storage-state";
 import { usePlanTier } from "@/hooks/use-plan-tier";
 import { BrainwaveAudioEngine } from "@/lib/audio/engine";
 import { DEFAULT_AUDIO_SETTINGS } from "@/lib/audio/types";
+import { getBand } from "@/lib/audio/bands";
 import type { GoalTag, MarketplaceListing, ProgramRecord, ProgramWaypoint, PresetRecord } from "@/lib/domain";
 import { generateId } from "@/lib/id";
 import { MARKETPLACE_SEED } from "@/lib/marketplace-seed";
@@ -19,18 +20,18 @@ const TAG_FILTERS: Array<GoalTag | "all"> = ["all", "sleep", "focus", "calm", "m
 export default function MarketplacePage() {
   const engineRef = useRef(new BrainwaveAudioEngine(DEFAULT_AUDIO_SETTINGS));
   const previewRef = useRef<string | null>(null);
-  const [unlockedPreview, setUnlockedPreview] = useState(false);
+  const unlockedRef = useRef(false);
   const [playingPreviewId, setPlayingPreviewId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<"trending" | "new">("trending");
   const [tagFilter, setTagFilter] = useState<GoalTag | "all">("all");
   const [message, setMessage] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(false);
   const [listings, setListings] = useState<MarketplaceListing[]>(MARKETPLACE_SEED);
+  const [showPublishForm, setShowPublishForm] = useState(false);
 
-  const { tier: guestTier, entitlements: guestEntitlements } = usePlanTier();
+  const { entitlements: guestEntitlements } = usePlanTier();
   const authSession = useAuthSession();
   const usingRemote = authSession.authenticated;
-  const tier = usingRemote ? authSession.tier : guestTier;
   const entitlements = usingRemote ? authSession.entitlements : guestEntitlements;
 
   const [publishType, setPublishType] = useState<"preset" | "program">("preset");
@@ -76,18 +77,13 @@ export default function MarketplacePage() {
     };
   }, [sortMode, tagFilter, usingRemote]);
 
-  async function unlockPreview() {
-    await engineRef.current.unlock();
-    setUnlockedPreview(true);
-  }
-
   async function togglePreview(listingId: string) {
     const listing = listings.find((item) => item.id === listingId);
     if (!listing) return;
 
-    if (!unlockedPreview) {
-      setMessage("Tap “Unlock Preview Audio” before playing previews.");
-      return;
+    if (!unlockedRef.current) {
+      await engineRef.current.unlock();
+      unlockedRef.current = true;
     }
 
     if (playingPreviewId === listingId) {
@@ -123,28 +119,28 @@ export default function MarketplacePage() {
 
         const data = (await response.json()) as { ok?: boolean; message?: string };
         if (!response.ok) {
-          setMessage(data.message ?? "Import blocked.");
+          setMessage(data.message ?? "That import did not go through.");
           return;
         }
 
         setImportedListingIds((current) =>
           current.includes(listing.id) ? current : [...current, listing.id],
         );
-        setMessage(`Imported "${listing.title}" into your Supabase account.`);
+        setMessage(`"${listing.title}" now lives in your library.`);
         return;
       } catch {
-        setMessage("Could not import listing.");
+        setMessage("That import did not go through just now.");
         return;
       }
     }
 
     if (!entitlements.canImport) {
-      setMessage("Import is locked on Free. Upgrade to Pro or Elite.");
+      setMessage("Importing community work is a Premium privilege.");
       return;
     }
 
     if (importedListingIds.includes(listing.id)) {
-      setMessage("Already imported.");
+      setMessage("Already in your library.");
       return;
     }
 
@@ -175,22 +171,22 @@ export default function MarketplacePage() {
     }
 
     setImportedListingIds((current) => [...current, listing.id]);
-    setMessage(`Imported "${listing.title}".`);
+    setMessage(`"${listing.title}" now lives in your library.`);
   }
 
   async function publishListing() {
     if (!usingRemote) {
-      setMessage("Sign in first to publish listings to Supabase marketplace.");
+      setMessage("Sign in to share your work with the community.");
       return;
     }
 
     if (!entitlements.canPublish) {
-      setMessage("Publishing is locked on Free. Upgrade to publish in Marketplace.");
+      setMessage("Publishing to the market is a Premium privilege.");
       return;
     }
 
     if (!publishSourceId.trim() || !publishTitle.trim()) {
-      setMessage("Source ID and title are required.");
+      setMessage("A title and the preset or journey to share are both needed.");
       return;
     }
 
@@ -213,159 +209,170 @@ export default function MarketplacePage() {
 
       const data = (await response.json()) as { ok?: boolean; message?: string };
       if (!response.ok) {
-        setMessage(data.message ?? "Publish failed.");
+        setMessage(data.message ?? "That listing could not be published.");
         return;
       }
 
-      setMessage("Listing published.");
+      setMessage("Your work is live in the market.");
       setPublishSourceId("");
       setPublishTitle("");
       authSession.refresh();
     } catch {
-      setMessage("Could not publish listing.");
+      setMessage("That listing could not be published just now.");
     }
   }
 
   const visibleListings = useMemo(() => listings, [listings]);
 
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-4 px-4 pb-28 pt-4">
+    <section className="mx-auto w-full max-w-screen-sm space-y-5 px-5 pb-32 pt-6">
       <header>
-        <h1 className="font-display text-2xl font-semibold text-white">Marketplace</h1>
-        <p className="mt-2 text-sm text-slate-200/80">
-          Browse trending/new community protocols. Tier <span className="font-semibold">{tier}</span>.
+        <h1 className="h-display text-[1.75rem]">The market</h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Frequencies tuned by practitioners, shared with the community. Preview any of them free.
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={unlockPreview}
-          className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950"
-        >
-          Unlock Preview Audio
-        </button>
-        <button
-          onClick={() => void publishListing()}
-          className="rounded-xl bg-slate-800 px-3 py-2 text-xs text-slate-200"
-        >
-          Publish Protocol
-        </button>
-      </div>
-
-      <article className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">Publish Form</p>
-        <div className="grid grid-cols-2 gap-2">
-          <select
-            value={publishType}
-            onChange={(event) => setPublishType(event.target.value as "preset" | "program")}
-            className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-xs text-white"
+      <div className="flex flex-wrap items-center gap-2">
+        {(["trending", "new"] as const).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setSortMode(mode)}
+            className={`chip text-xs capitalize ${sortMode === mode ? "chip-active" : ""}`}
           >
-            <option value="preset">preset</option>
-            <option value="program">program</option>
-          </select>
-          <input
-            value={publishSourceId}
-            onChange={(event) => setPublishSourceId(event.target.value)}
-            placeholder="source id"
-            className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-xs text-white"
-          />
-          <input
-            value={publishTitle}
-            onChange={(event) => setPublishTitle(event.target.value)}
-            placeholder="listing title"
-            className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-xs text-white"
-          />
-          <input
-            value={publishTags}
-            onChange={(event) => setPublishTags(event.target.value)}
-            placeholder="tags: focus,calm"
-            className="rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-xs text-white"
-          />
-        </div>
-      </article>
-
-      {message ? (
-        <div className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-3 text-xs text-cyan-100">
-          {message}
-        </div>
-      ) : null}
-
-      {!entitlements.canImport ? (
-        <div className="rounded-xl border border-amber-300/35 bg-amber-100/10 p-3 text-xs text-amber-100">
-          <p>Import is locked. Unlock with Pro or Elite.</p>
-          <Link href="/pricing" className="mt-2 inline-block rounded-lg bg-amber-200/20 px-3 py-1">
-            Upgrade
-          </Link>
-        </div>
-      ) : null}
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSortMode("trending")}
-          className={`rounded-full px-3 py-1 text-xs ${
-            sortMode === "trending" ? "bg-cyan-400/30 text-cyan-100" : "bg-slate-800 text-slate-300"
-          }`}
-        >
-          Trending
-        </button>
-        <button
-          onClick={() => setSortMode("new")}
-          className={`rounded-full px-3 py-1 text-xs ${
-            sortMode === "new" ? "bg-cyan-400/30 text-cyan-100" : "bg-slate-800 text-slate-300"
-          }`}
-        >
-          New
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
+            {mode}
+          </button>
+        ))}
+        <span className="mx-1 h-4 w-px bg-[var(--hairline-soft)]" />
         {TAG_FILTERS.map((tag) => (
           <button
             key={tag}
             onClick={() => setTagFilter(tag)}
-            className={`rounded-full px-3 py-1 text-xs ${
-              tagFilter === tag ? "bg-white/20 text-white" : "bg-slate-800 text-slate-300"
-            }`}
+            className={`chip text-xs capitalize ${tagFilter === tag ? "chip-active" : ""}`}
           >
             {tag}
           </button>
         ))}
       </div>
 
-      {loadingListings ? <p className="text-xs text-slate-400">Loading marketplace...</p> : null}
+      {message ? <div className="card-gold text-xs">{message}</div> : null}
 
-      <ul className="space-y-3">
-        {visibleListings.map((listing) => (
-          <li key={listing.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-white">{listing.title}</h2>
-                <p className="text-xs text-slate-300">
-                  {listing.creator}
-                  {listing.creatorBadge ? ` · ${listing.creatorBadge}` : ""} · {listing.type}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-400">
-                  {listing.tags.join(", ")} · score {listing.trendScore}
-                </p>
+      {!entitlements.canImport ? (
+        <div className="card text-xs text-ink-muted">
+          <p>
+            Browsing and previews are always free. Bringing community work into your own library
+            comes with Premium.
+          </p>
+          <Link href="/pricing" className="btn-quiet mt-3 text-xs">
+            See Premium
+          </Link>
+        </div>
+      ) : null}
+
+      {loadingListings ? <p className="text-xs text-ink-faint">Gathering the market…</p> : null}
+
+      <ul className="space-y-2.5">
+        {visibleListings.map((listing) => {
+          const band = getBand(listing.preview.entrainmentHz);
+          const imported = importedListingIds.includes(listing.id);
+          return (
+            <li
+              key={listing.id}
+              className="rounded-2xl border border-[var(--hairline-soft)] bg-[var(--veil)] p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-medium text-ink">{listing.title}</h2>
+                  <p className="hz-readout mt-0.5 text-sm text-gold-bright">
+                    {listing.preview.entrainmentHz} Hz {band.name.toLowerCase()} ·{" "}
+                    {Math.round(listing.preview.carrierHz)} Hz carrier
+                  </p>
+                  <p className="mt-1 text-[11px] text-ink-faint">
+                    by {listing.creator}
+                    {listing.creatorBadge ? ` · ${listing.creatorBadge}` : ""} ·{" "}
+                    {listing.type === "program" ? "journey" : "preset"} · {listing.tags.join(", ")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    onClick={() => void togglePreview(listing.id)}
+                    className="btn-quiet px-3.5 py-1 text-[11px]"
+                  >
+                    {playingPreviewId === listing.id ? "Stop" : "Listen"}
+                  </button>
+                  <button
+                    onClick={() => void importListing(listing.id)}
+                    disabled={imported}
+                    className="btn-gold px-3.5 py-1 text-[11px]"
+                  >
+                    {imported ? "In library" : "Keep"}
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => void togglePreview(listing.id)}
-                  className="rounded-lg bg-cyan-400/20 px-2 py-1 text-[11px] text-cyan-100"
-                >
-                  {playingPreviewId === listing.id ? "Stop" : "Preview"}
-                </button>
-                <button
-                  onClick={() => void importListing(listing.id)}
-                  className="rounded-lg bg-emerald-400/20 px-2 py-1 text-[11px] text-emerald-100"
-                >
-                  {importedListingIds.includes(listing.id) ? "Imported" : "Import"}
-                </button>
-              </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
+
+      <article className="card space-y-3">
+        <button
+          onClick={() => setShowPublishForm((current) => !current)}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <span className="h-display text-xl">Share your work</span>
+          <span className="text-xs text-ink-faint">{showPublishForm ? "Close" : "Open"}</span>
+        </button>
+        {showPublishForm ? (
+          <div className="space-y-3">
+            <p className="text-xs text-ink-muted">
+              Publish a preset or journey from your library into the market.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="label space-y-1.5">
+                Kind
+                <select
+                  value={publishType}
+                  onChange={(event) => setPublishType(event.target.value as "preset" | "program")}
+                  className="field"
+                >
+                  <option value="preset">preset</option>
+                  <option value="program">journey</option>
+                </select>
+              </label>
+              <label className="label space-y-1.5">
+                Library item ID
+                <input
+                  value={publishSourceId}
+                  onChange={(event) => setPublishSourceId(event.target.value)}
+                  placeholder="From your library"
+                  className="field"
+                />
+              </label>
+            </div>
+            <label className="label space-y-1.5">
+              Title
+              <input
+                value={publishTitle}
+                onChange={(event) => setPublishTitle(event.target.value)}
+                placeholder="Golden Hour Focus"
+                className="field"
+              />
+            </label>
+            <label className="label space-y-1.5">
+              Tags
+              <input
+                value={publishTags}
+                onChange={(event) => setPublishTags(event.target.value)}
+                placeholder="focus, calm"
+                className="field"
+              />
+            </label>
+            <button onClick={() => void publishListing()} className="btn-gold w-full text-xs">
+              Publish to Market
+            </button>
+          </div>
+        ) : null}
+      </article>
     </section>
   );
 }

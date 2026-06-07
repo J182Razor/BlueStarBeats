@@ -1,11 +1,11 @@
 export default function TermsPage() {
   return (
-    <section className="mx-auto w-full max-w-screen-sm space-y-3 px-4 pb-28 pt-4 text-sm text-slate-200/85">
-      <h1 className="font-display text-2xl font-semibold text-white">Terms</h1>
-      <p>By using BlueStarBeats, you agree to use the service for personal wellness and focus purposes only.</p>
-      <p>Subscriptions renew automatically unless cancelled in Stripe Customer Portal before the renewal date.</p>
-      <p>Founders Lifetime is capped at 250 total purchases and ends March 31, 2026 11:59 PM PT.</p>
-      <p>User-generated presets/programs may be removed if they violate platform rules or applicable law.</p>
+    <section className="mx-auto w-full max-w-screen-sm space-y-3 px-5 pb-32 pt-6 text-sm leading-relaxed text-ink-muted">
+      <h1 className="h-display text-[1.75rem] text-ink">Terms</h1>
+      <p>By using Blue Star Beats, you agree to use the service for personal wellness and focus purposes only.</p>
+      <p>Subscriptions renew automatically unless cancelled before the renewal date. You can manage or cancel your plan from your account at any time.</p>
+      <p>Founding Member is a one-time lifetime purchase capped at 250 total members and ends March 31, 2026 at 11:59 PM PT.</p>
+      <p>Presets and journeys published to the market may be removed if they violate platform rules or applicable law.</p>
       <p>Service availability, features, and pricing may change over time. Continued use implies acceptance of updated terms.</p>
     </section>
   );

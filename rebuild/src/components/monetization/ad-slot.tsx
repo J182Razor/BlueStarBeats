@@ -7,12 +7,11 @@ export function AdSlot({ context, isFreeTier }: AdSlotProps) {
   if (!isFreeTier) return null;
 
   return (
-    <aside className="rounded-xl border border-dashed border-cyan-300/50 bg-cyan-400/10 p-3 text-xs text-cyan-100">
-      <p className="font-semibold uppercase tracking-wide">Ad Placement</p>
-      <p className="mt-1">
+    <aside className="rounded-2xl border border-dashed border-[var(--hairline-soft)] px-4 py-3 text-[11px] text-ink-faint">
+      <p>
         {context === "pre-session"
-          ? "Shown before session start (free tier)."
-          : "Shown after session completion (free tier)."}
+          ? "A brief sponsor message appears here on the free plan."
+          : "Sponsor message · Premium listens without these."}
       </p>
     </aside>
   );
